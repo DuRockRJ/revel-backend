@@ -17,6 +17,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Impersonate"
+msgstr "Als Anwender:in anmelden"
+
 #, python-format
 msgid "Verification email sent to %d user."
 msgid_plural "Verification emails sent to %d users."
@@ -60,9 +63,6 @@ msgstr[0] ""
 "%d Anwender:in übersprungen (Staff/Superuser oder bereits gesperrt)."
 msgstr[1] ""
 "%d Anwender:innen übersprungen (Staff/Superuser oder bereits gesperrt)."
-
-msgid "Impersonate"
-msgstr "Als Anwender:in anmelden"
 
 msgid "Impersonate User"
 msgstr "Als Anwender:in anmelden"
@@ -156,6 +156,7 @@ msgstr "Das Passwort muss mindestens einen Kleinbuchstaben enthalten."
 msgid "Password must contain at least one digit."
 msgstr "Das Passwort muss mindestens eine Ziffer enthalten."
 
+#, python-brace-format
 msgid ""
 "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)"
 "[]=."
@@ -163,7 +164,7 @@ msgstr ""
 "Das Passwort muss mindestens ein Sonderzeichen enthalten (!@#$%^&*(),.?\":{}|"
 "<>)[]=."
 
-#, python-format
+#, python-format, python-brace-format
 msgid ""
 "Your password must be at least %(min_length)d characters long, contain at "
 "least one uppercase letter, one lowercase letter, one digit, and one special "
@@ -1415,18 +1416,17 @@ msgstr "Du bist bereits zu diesem Event eingeladen."
 msgid "You have already requested an invitation to this event."
 msgstr "Du hast bereits eine Einladung zu diesem Event angefragt."
 
-msgid "Only the organization owner can manage staff-granting tokens."
-msgstr ""
-"Nur der:die Organisationsinhaber:in kann Token verwalten, die Staff-"
-"Mitgliedschaft gewähren."
+msgid "This is already the contact email for this organization."
+msgstr "Dies ist bereits die Kontakt-E-Mail-Adresse für diese Organisation."
 
-msgid "At least one of grants_membership or grants_staff_status must be True."
-msgstr ""
-"Mindestens eines von grants_membership oder grants_staff_status muss True "
-"sein."
+msgid "Contact form is not enabled for this organization."
+msgstr "Das Kontaktformular ist für diese Organisation nicht aktiviert."
 
-msgid "membership_tier_id is required when grants_membership is True."
-msgstr "membership_tier_id ist erforderlich, wenn grants_membership True ist."
+msgid "Organization not found."
+msgstr "Organisation nicht gefunden."
+
+msgid "This verification link is for a different email address."
+msgstr "Dieser Verifizierungslink ist für eine andere E-Mail-Adresse."
 
 msgid "Only the organization owner can change the revenue report cadence."
 msgstr ""
@@ -1460,17 +1460,18 @@ msgstr "Anwender:in ist bereits Mitglied dieser Organisation."
 msgid "User is already a staff member of this organization."
 msgstr "Anwender:in ist bereits Staff-Mitglied dieser Organisation."
 
-msgid "This is already the contact email for this organization."
-msgstr "Dies ist bereits die Kontakt-E-Mail-Adresse für diese Organisation."
+msgid "Only the organization owner can manage staff-granting tokens."
+msgstr ""
+"Nur der:die Organisationsinhaber:in kann Token verwalten, die Staff-"
+"Mitgliedschaft gewähren."
 
-msgid "Contact form is not enabled for this organization."
-msgstr "Das Kontaktformular ist für diese Organisation nicht aktiviert."
+msgid "At least one of grants_membership or grants_staff_status must be True."
+msgstr ""
+"Mindestens eines von grants_membership oder grants_staff_status muss True "
+"sein."
 
-msgid "Organization not found."
-msgstr "Organisation nicht gefunden."
-
-msgid "This verification link is for a different email address."
-msgstr "Dieser Verifizierungslink ist für eine andere E-Mail-Adresse."
+msgid "membership_tier_id is required when grants_membership is True."
+msgstr "membership_tier_id ist erforderlich, wenn grants_membership True ist."
 
 msgid "A file must be provided when resource_type is 'file'."
 msgstr "Eine Datei muss bereitgestellt werden, wenn resource_type 'file' ist."
@@ -1647,9 +1648,11 @@ msgstr ""
 "Der Erstattungsbetrag muss zwischen 0 und dem gezahlten Betrag liegen "
 "(%(amount)s)."
 
+#, python-brace-format
 msgid "Seat '{}' position is outside the sector shape."
 msgstr "Die Position des Sitzplatzes '{}' liegt außerhalb der Sektorform."
 
+#, python-brace-format
 msgid "Seat with label '{}' not found in this sector."
 msgstr ""
 "Sitzplatz mit der Bezeichnung '{}' wurde in diesem Sektor nicht gefunden."
@@ -1657,6 +1660,7 @@ msgstr ""
 msgid "Seat position is outside the sector shape."
 msgstr "Die Sitzposition liegt außerhalb der Sektorform."
 
+#, python-brace-format
 msgid ""
 "Cannot delete seat '{}' because it has active or pending tickets for future "
 "events."
@@ -1664,9 +1668,11 @@ msgstr ""
 "Der Sitzplatz '{}' kann nicht gelöscht werden, da er aktive oder ausstehende "
 "Tickets für zukünftige Events hat."
 
+#, python-brace-format
 msgid "Seats not found in this sector: {}"
 msgstr "Sitzplätze in diesem Sektor nicht gefunden: {}"
 
+#, python-brace-format
 msgid ""
 "Cannot delete seats with active or pending tickets for future events: {}"
 msgstr ""
@@ -1788,8 +1794,9 @@ msgstr "%(count)d neue Benachrichtigung%(plural)s"
 msgid "Account Suspended"
 msgstr "Konto gesperrt"
 
-msgid "Revel - Your account has been suspended"
-msgstr "Revel - Dein Konto wurde gesperrt"
+#, python-format
+msgid "%(site_name)s - Your account has been suspended"
+msgstr "%(site_name)s - Dein Konto wurde gesperrt"
 
 #, python-format
 msgid "New Event: %(event)s"
@@ -2067,8 +2074,8 @@ msgid "System Announcement"
 msgstr "Systemankündigung"
 
 #, python-format
-msgid "Revel - %(title)s"
-msgstr "Revel - %(title)s"
+msgid "%(site_name)s - %(title)s"
+msgstr "%(site_name)s - %(title)s"
 
 #, python-format
 msgid "New Ticket: %(holder)s - %(event)s"

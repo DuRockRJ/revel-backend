@@ -17,6 +17,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Impersonate"
+msgstr "Emprunter l'identité"
+
 #, python-format
 msgid "Verification email sent to %d user."
 msgid_plural "Verification emails sent to %d users."
@@ -65,9 +68,6 @@ msgstr[0] ""
 msgstr[1] ""
 "%d utilisateur·rice·s ignoré·e·s (staff/superutilisateur·rice·s ou déjà "
 "banni·e·s)."
-
-msgid "Impersonate"
-msgstr "Emprunter l'identité"
 
 msgid "Impersonate User"
 msgstr "Emprunter l'identité de l'utilisateur·rice"
@@ -161,6 +161,7 @@ msgstr "Le mot de passe doit contenir au moins une lettre minuscule."
 msgid "Password must contain at least one digit."
 msgstr "Le mot de passe doit contenir au moins un chiffre."
 
+#, python-brace-format
 msgid ""
 "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)"
 "[]=."
@@ -168,7 +169,7 @@ msgstr ""
 "Le mot de passe doit contenir au moins un caractère spécial (!@#$%^&*(),.?\":"
 "{}|<>)."
 
-#, python-format
+#, python-format, python-brace-format
 msgid ""
 "Your password must be at least %(min_length)d characters long, contain at "
 "least one uppercase letter, one lowercase letter, one digit, and one special "
@@ -1428,17 +1429,17 @@ msgstr "Tu es déjà invité·e à cet événement."
 msgid "You have already requested an invitation to this event."
 msgstr "Tu as déjà demandé une invitation pour cet événement."
 
-msgid "Only the organization owner can manage staff-granting tokens."
-msgstr ""
-"Seul·e le·la propriétaire de l'organisation peut gérer les jetons attribuant "
-"le statut de staff."
+msgid "This is already the contact email for this organization."
+msgstr "C'est déjà l'adresse e-mail de contact de cette organisation."
 
-msgid "At least one of grants_membership or grants_staff_status must be True."
-msgstr ""
-"Au moins l'un de grants_membership ou grants_staff_status doit être True."
+msgid "Contact form is not enabled for this organization."
+msgstr "Le formulaire de contact n'est pas activé pour cette organisation."
 
-msgid "membership_tier_id is required when grants_membership is True."
-msgstr "membership_tier_id est requis lorsque grants_membership est True."
+msgid "Organization not found."
+msgstr "Organisation non trouvée."
+
+msgid "This verification link is for a different email address."
+msgstr "Ce lien de vérification est destiné à une adresse e-mail différente."
 
 msgid "Only the organization owner can change the revenue report cadence."
 msgstr ""
@@ -1470,17 +1471,17 @@ msgstr "L'utilisateur·rice est déjà membre de cette organisation."
 msgid "User is already a staff member of this organization."
 msgstr "L'utilisateur·rice est déjà membre du staff de cette organisation."
 
-msgid "This is already the contact email for this organization."
-msgstr "C'est déjà l'adresse e-mail de contact de cette organisation."
+msgid "Only the organization owner can manage staff-granting tokens."
+msgstr ""
+"Seul·e le·la propriétaire de l'organisation peut gérer les jetons attribuant "
+"le statut de staff."
 
-msgid "Contact form is not enabled for this organization."
-msgstr "Le formulaire de contact n'est pas activé pour cette organisation."
+msgid "At least one of grants_membership or grants_staff_status must be True."
+msgstr ""
+"Au moins l'un de grants_membership ou grants_staff_status doit être True."
 
-msgid "Organization not found."
-msgstr "Organisation non trouvée."
-
-msgid "This verification link is for a different email address."
-msgstr "Ce lien de vérification est destiné à une adresse e-mail différente."
+msgid "membership_tier_id is required when grants_membership is True."
+msgstr "membership_tier_id est requis lorsque grants_membership est True."
 
 msgid "A file must be provided when resource_type is 'file'."
 msgstr ""
@@ -1655,15 +1656,18 @@ msgstr ""
 "Le montant du remboursement doit être compris entre 0 et le montant payé "
 "(%(amount)s)."
 
+#, python-brace-format
 msgid "Seat '{}' position is outside the sector shape."
 msgstr "La position du siège « {} » est en dehors de la forme du secteur."
 
+#, python-brace-format
 msgid "Seat with label '{}' not found in this sector."
 msgstr "Siège avec l'étiquette « {} » introuvable dans ce secteur."
 
 msgid "Seat position is outside the sector shape."
 msgstr "La position du siège est en dehors de la forme du secteur."
 
+#, python-brace-format
 msgid ""
 "Cannot delete seat '{}' because it has active or pending tickets for future "
 "events."
@@ -1671,9 +1675,11 @@ msgstr ""
 "Impossible de supprimer le siège « {} » car il comporte des tickets actifs "
 "ou en attente pour des événements futurs."
 
+#, python-brace-format
 msgid "Seats not found in this sector: {}"
 msgstr "Sièges introuvables dans ce secteur : {}"
 
+#, python-brace-format
 msgid ""
 "Cannot delete seats with active or pending tickets for future events: {}"
 msgstr ""
@@ -1796,8 +1802,9 @@ msgstr "%(count)d nouvelle%(plural)s notification%(plural)s"
 msgid "Account Suspended"
 msgstr "Compte suspendu"
 
-msgid "Revel - Your account has been suspended"
-msgstr "Revel - Ton compte a été suspendu"
+#, python-format
+msgid "%(site_name)s - Your account has been suspended"
+msgstr "%(site_name)s - Ton compte a été suspendu"
 
 #, python-format
 msgid "New Event: %(event)s"
@@ -2075,8 +2082,8 @@ msgid "System Announcement"
 msgstr "Annonce système"
 
 #, python-format
-msgid "Revel - %(title)s"
-msgstr "Revel - %(title)s"
+msgid "%(site_name)s - %(title)s"
+msgstr "%(site_name)s - %(title)s"
 
 #, python-format
 msgid "New Ticket: %(holder)s - %(event)s"
