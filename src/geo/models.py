@@ -56,5 +56,5 @@ class City(models.Model):
         verbose_name_plural = "cities"
 
     def __str__(self) -> str:
-        parts = [self.name, self.admin_name, self.country]
+        parts = [self.name, self.admin_name]
         return ", ".join(p for p in parts if p)

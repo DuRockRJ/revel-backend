@@ -23,7 +23,7 @@ class CityController(ControllerBase):
     @paginate(PageNumberPaginationExtra, page_size=20)
     @searching(
         Searching,
-        search_fields=["name", "ascii_name", "country"],
+        search_fields=["name", "ascii_name", "admin_name", "country"],
     )
     def list_cities(self, filters: t.Annotated[CityFilterSchema, Query(...)]) -> QuerySet[City]:
         """Search and browse cities from the global database.
