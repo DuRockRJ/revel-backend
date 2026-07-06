@@ -141,11 +141,105 @@ for _name in [
 # Tijuca). Population is apportioned from the 2022 Census total (6,211,223)
 # using widely-cited planning-area shares — Zona Norte and Zona Oeste are the
 # most populous, Centro is mostly commercial with low residency.
-RJ_ZONES: list[tuple[str, float, float, int, int]] = [
-    ("Centro", -22.9068, -43.1729, 41_000, 3304557001),
-    ("Zona Sul", -22.9711, -43.1822, 600_000, 3304557002),
-    ("Zona Norte", -22.9249, -43.2277, 2_700_000, 3304557003),
-    ("Zona Oeste", -22.9990, -43.3653, 2_870_223, 3304557004),
+#
+# Neighborhoods aren't tracked as their own City rows (there's no bairro-level
+# model), so the main neighborhoods of each zone are folded into ascii_name
+# as extra search keywords instead — invisible in display (CitySchema doesn't
+# expose ascii_name), but City search is icontains-per-word, so e.g. typing
+# "Copacabana" still resolves to the Zona Sul row.
+RJ_ZONES: list[tuple[str, float, float, int, int, tuple[str, ...]]] = [
+    (
+        "Centro",
+        -22.9068,
+        -43.1729,
+        41_000,
+        3304557001,
+        (
+            "Centro",
+            "Lapa",
+            "Santa Teresa",
+            "Cidade Nova",
+            "Gamboa",
+            "Saude",
+            "Santo Cristo",
+            "Sao Cristovao",
+            "Caju",
+            "Paqueta",
+            "Praca da Bandeira",
+            "Rio Comprido",
+        ),
+    ),
+    (
+        "Zona Sul",
+        -22.9711,
+        -43.1822,
+        600_000,
+        3304557002,
+        (
+            "Copacabana",
+            "Ipanema",
+            "Leblon",
+            "Botafogo",
+            "Flamengo",
+            "Laranjeiras",
+            "Catete",
+            "Humaita",
+            "Cosme Velho",
+            "Gavea",
+            "Jardim Botanico",
+            "Lagoa",
+            "Urca",
+            "Sao Conrado",
+            "Rocinha",
+            "Vidigal",
+        ),
+    ),
+    (
+        "Zona Norte",
+        -22.9249,
+        -43.2277,
+        2_700_000,
+        3304557003,
+        (
+            "Tijuca",
+            "Vila Isabel",
+            "Grajau",
+            "Maracana",
+            "Meier",
+            "Madureira",
+            "Bonsucesso",
+            "Ramos",
+            "Penha",
+            "Olaria",
+            "Iraja",
+            "Pavuna",
+            "Ilha do Governador",
+            "Del Castilho",
+            "Todos os Santos",
+            "Cascadura",
+        ),
+    ),
+    (
+        "Zona Oeste",
+        -22.9990,
+        -43.3653,
+        2_870_223,
+        3304557004,
+        (
+            "Barra da Tijuca",
+            "Deodoro",
+            "Recreio dos Bandeirantes",
+            "Jacarepagua",
+            "Campo Grande",
+            "Santa Cruz",
+            "Bangu",
+            "Guaratiba",
+            "Realengo",
+            "Sepetiba",
+            "Vargem Grande",
+            "Vargem Pequena",
+        ),
+    ),
 ]
 
 
@@ -165,7 +259,7 @@ def apply_regions(apps: migrations.state.Apps, schema_editor: t.Any) -> None:
         [
             City(
                 name="Rio de Janeiro",
-                ascii_name="Rio de Janeiro",
+                ascii_name=" ".join(("Rio de Janeiro", *neighborhoods)),
                 admin_name=zone_name,
                 capital="admin" if zone_name == "Centro" else None,
                 population=population,
@@ -173,7 +267,7 @@ def apply_regions(apps: migrations.state.Apps, schema_editor: t.Any) -> None:
                 location=Point(lng, lat),
                 **shared,
             )
-            for zone_name, lat, lng, population, city_id in RJ_ZONES
+            for zone_name, lat, lng, population, city_id, neighborhoods in RJ_ZONES
         ]
     )
 
