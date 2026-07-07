@@ -14,6 +14,7 @@ from ninja.errors import HttpError
 from accounts.models import RevelUser
 from events.models import (
     AdditionalResource,
+    Band,
     Event,
     EventInvitation,
     EventInvitationRequest,
@@ -549,6 +550,20 @@ class TestDuplicateEvent:
         new_tags = [tag.name for tag in new_event.tags_manager.all()]
         assert "music" in new_tags
         assert "outdoor" in new_tags
+
+    def test_duplicate_event_copies_bands(self, public_event: Event) -> None:
+        """Test that bands are copied to the new event."""
+        band = Band.objects.create(name="Nirvana")
+        public_event.bands.add(band)
+
+        new_event = event_service.duplicate_event(
+            template_event=public_event,
+            new_name="Duplicated Event",
+            new_start=public_event.start + timedelta(days=30),
+        )
+
+        new_bands = [b.name for b in new_event.bands.all()]
+        assert new_bands == ["Nirvana"]
 
     def test_duplicate_event_links_questionnaires(
         self, public_event: Event, org_questionnaire: OrganizationQuestionnaire

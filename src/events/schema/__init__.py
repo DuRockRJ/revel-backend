@@ -82,6 +82,8 @@ from .venue import (
 # Event schemas
 from .event import (
     AttendeeSchema,
+    BandSchema,
+    BandUpdateSchema,
     EventCreateSchema,
     EventDetailSchema,
     EventDuplicateSchema,
@@ -405,6 +407,8 @@ __all__ = [
     "point_in_polygon",
     # Event
     "AttendeeSchema",
+    "BandSchema",
+    "BandUpdateSchema",
     "EventCreateSchema",
     "EventDetailSchema",
     "EventDuplicateSchema",

@@ -16,6 +16,7 @@ from common.exception_handlers import ExceptionHandler, register_handlers
 from common.models import Legal, SiteSettings
 from common.schema import BannerSchema, FeaturesSchema, LegalSchema, ResponseOk, VersionResponse
 from common.throttling import AnonDefaultThrottle, UserDefaultThrottle
+from events.controllers.bands import BandController
 from events.controllers.dashboard import DashboardController
 from events.controllers.event_admin import EVENT_ADMIN_CONTROLLERS
 from events.controllers.event_public import EVENT_PUBLIC_CONTROLLERS
@@ -126,6 +127,7 @@ api.register_controllers(
     UserBillingController,
     # Event controllers
     DashboardController,
+    BandController,
     OrganizationController,
     *ORGANIZATION_ADMIN_CONTROLLERS,
     *EVENT_PUBLIC_CONTROLLERS,

@@ -42,6 +42,7 @@ class EventPublicDiscoveryController(EventPublicBaseController):
             "organization__name",
             "organization__description",
             "tags__tag__name",
+            "bands__name",
         ],
     )
     def list_events(
@@ -56,7 +57,7 @@ class EventPublicDiscoveryController(EventPublicBaseController):
         By default, shows only upcoming events; set include_past=true to see past events.
         Ordering: 'distance' (default) shows nearest events based on user location, 'start' shows
         soonest first, '-start' shows latest first. Supports filtering by organization, series,
-        tags, and text search.
+        tags, bands, and text search.
         """
         params.next_events = not include_past
 

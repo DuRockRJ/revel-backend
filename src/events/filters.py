@@ -61,6 +61,7 @@ class EventFilterSchema(CityFilterMixin):
     past_events: bool | None = None
     status: Event.EventStatus | None = None
     tags: list[str] | None = None
+    bands: list[str] | None = None
     date: AwareDatetime | None = None
     start_after: AwareDatetime | None = None
     start_before: AwareDatetime | None = None
@@ -119,6 +120,12 @@ class EventFilterSchema(CityFilterMixin):
             | Q(organization__tags__tag__name__in=tags)
             | Q(event_series__tags__tag__name__in=tags)
         )
+
+    def filter_bands(self, bands: list[str] | None) -> Q:
+        """Helper to find events with any of the given bands."""
+        if not bands:
+            return Q()
+        return Q(bands__name__in=bands)
 
 
 class EventSeriesFilterSchema(FilterSchema):

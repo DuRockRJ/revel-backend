@@ -1,5 +1,6 @@
 from .announcement import Announcement
 from .attendee_invoice import AttendeeInvoice, AttendeeInvoiceCreditNote
+from .band import Band
 from .blacklist import Blacklist, WhitelistRequest
 from .bookmark import EventBookmark
 from .discount_code import DiscountCode
@@ -58,6 +59,8 @@ from .ticket import (
 from .venue import Venue, VenueSeat, VenueSector
 
 __all__ = [
+    # Bands
+    "Band",
     # Events
     "AttendeeVisibilityFlag",
     "DEFAULT_TICKET_TIER_NAME",

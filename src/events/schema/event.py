@@ -10,7 +10,7 @@ from pydantic import AwareDatetime, BaseModel, Field, StringConstraints
 
 from accounts.models import RevelUser
 from common.schema import OneToOneFiftyString, OneToSixtyFourString, ProfilePictureSchemaMixin, StrippedString
-from events.models import Event, ResourceVisibility
+from events.models import Band, Event, ResourceVisibility
 from events.utils.schedule import EventScheduleSession
 from geo.schema import CitySchema
 
@@ -102,6 +102,7 @@ class EventBaseSchema(TaggableSchemaMixin, LogoCoverArtThumbnailMixin):
     status: Event.EventStatus
     event_series: MinimalEventSeriesSchema | None = None
     venue: VenueSchema | None = None
+    bands: list[str] = Field(default_factory=list)
     name: str
     slug: str
     description: str | None = None
@@ -137,6 +138,11 @@ class EventBaseSchema(TaggableSchemaMixin, LogoCoverArtThumbnailMixin):
     seats_held: int = 0
     is_bookmarked: bool = False
     cancellation_reason: str | None = None
+
+    @staticmethod
+    def resolve_bands(obj: "Event") -> list[str]:
+        """Flatten the event's bands to their names."""
+        return [band.name for band in obj.bands.all()]
 
     @staticmethod
     def resolve_timezone(obj: "Event") -> str:
@@ -273,6 +279,16 @@ class MinimalEventSchema(LogoCoverArtThumbnailMixin):
 
 class TagUpdateSchema(BaseModel):
     tags: list[OneToSixtyFourString] = Field(..., description="A list of tag names to add or remove.")
+
+
+class BandSchema(ModelSchema):
+    class Meta:
+        model = Band
+        fields = ["id", "name"]
+
+
+class BandUpdateSchema(BaseModel):
+    bands: list[OneToSixtyFourString] = Field(..., description="A list of band names to add or remove.")
 
 
 class AttendeeSchema(ProfilePictureSchemaMixin, ModelSchema):

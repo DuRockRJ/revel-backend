@@ -221,10 +221,12 @@ def _duplicate_potluck_items(template_event: Event, new_event: Event) -> None:
 
 
 def _link_m2m_relations(template_event: Event, new_event: Event) -> None:
-    """Copy tags, questionnaires, and additional resources from template."""
+    """Copy tags, bands, questionnaires, and additional resources from template."""
     tag_names = [tag.name for tag in template_event.tags_manager.all()]
     if tag_names:
         new_event.tags_manager.add(*tag_names)
+
+    new_event.bands.set(template_event.bands.all())
 
     for oq in template_event.org_questionnaires.all():
         oq.events.add(new_event)

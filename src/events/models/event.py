@@ -15,6 +15,7 @@ from common.fields import MarkdownField
 from common.models import TagAssignment, TaggableMixin, TimeStampedModel
 from events.utils.schedule import validate_schedule
 
+from .band import Band
 from .event_series import EventSeries
 from .mixins import (
     LocationMixin,
@@ -52,6 +53,10 @@ class EventQuerySet(models.QuerySet["Event"]):
     def with_city(self) -> t.Self:
         """Select the city as well."""
         return self.select_related("city")
+
+    def with_bands(self) -> t.Self:
+        """Prefetch the bands lined up for the event."""
+        return self.prefetch_related("bands")
 
     def with_organization(self) -> t.Self:
         """Returns a queryset prefetching an organization and its members."""
@@ -205,6 +210,10 @@ class EventManager(models.Manager["Event"]):
         """Returns a queryset prefetching the tags."""
         return self.get_queryset().with_tags()
 
+    def with_bands(self) -> EventQuerySet:
+        """Returns a queryset prefetching the bands."""
+        return self.get_queryset().with_bands()
+
     def with_venue(self) -> EventQuerySet:
         """Returns a queryset selecting the related venue (without sectors/seats)."""
         return self.get_queryset().with_venue()
@@ -215,7 +224,7 @@ class EventManager(models.Manager["Event"]):
 
     def full(self) -> EventQuerySet:
         """Returns a queryset prefetching the full events."""
-        return self.get_queryset().with_organization().with_city().with_tags().with_venue()
+        return self.get_queryset().with_organization().with_city().with_tags().with_venue().with_bands()
 
     def for_user(
         self, user: RevelUser | AnonymousUser, include_past: bool = False, allowed_ids: list[UUID] | None = None
@@ -364,6 +373,7 @@ class Event(
         related_name="events",
         help_text="Optional venue for this event.",
     )
+    bands = models.ManyToManyField(Band, related_name="events", blank=True, help_text="Bands lined up for this event.")
 
     # Recurring event fields
     # NOTE: when adding new fields to Event, check whether they should be

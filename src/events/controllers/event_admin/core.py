@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from django.db.models import Q
 from ninja import File
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
@@ -10,7 +11,7 @@ from common.models import Tag
 from common.schema import TagSchema, ValidationErrorResponse
 from common.throttling import WriteThrottle
 from common.thumbnails.service import delete_image_with_derivatives
-from common.utils import safe_save_uploaded_file
+from common.utils import get_or_create_with_race_protection, safe_save_uploaded_file
 from events import models, schema
 from events.controllers.permissions import CanDuplicateEvent, EventPermission
 from events.service import event_service
@@ -28,7 +29,7 @@ from .base import EventAdminBaseController
 class EventAdminCoreController(EventAdminBaseController):
     """Core event admin operations.
 
-    Handles event CRUD, media uploads, status changes, and tags.
+    Handles event CRUD, media uploads, status changes, tags, and bands.
     """
 
     @route.put(
@@ -229,3 +230,41 @@ class EventAdminCoreController(EventAdminBaseController):
         event = self.get_one(event_id)
         event.tags_manager.remove(*payload.tags)
         return event.tags_manager.all()
+
+    @route.post(
+        "/bands",
+        url_name="add_event_bands",
+        response=list[schema.BandSchema],
+        permissions=[EventPermission("edit_event")],
+    )
+    def add_bands(self, event_id: UUID, payload: schema.BandUpdateSchema) -> list[models.Band]:
+        """Add one or more bands to the event, creating them if they don't exist yet."""
+        event = self.get_one(event_id)
+        for name in payload.bands:
+            band, _ = get_or_create_with_race_protection(models.Band, Q(name=name), {"name": name})
+            event.bands.add(band)
+        return list(event.bands.all())
+
+    @route.delete(
+        "/bands",
+        url_name="clear_event_bands",
+        response={204: None},
+        permissions=[EventPermission("edit_event")],
+    )
+    def clear_bands(self, event_id: UUID) -> tuple[int, None]:
+        """Remove all bands from the event."""
+        event = self.get_one(event_id)
+        event.bands.clear()
+        return 204, None
+
+    @route.post(
+        "/bands/remove",
+        url_name="remove_event_bands",
+        response=list[schema.BandSchema],
+        permissions=[EventPermission("edit_event")],
+    )
+    def remove_bands(self, event_id: UUID, payload: schema.BandUpdateSchema) -> list[models.Band]:
+        """Remove one or more bands from the event."""
+        event = self.get_one(event_id)
+        event.bands.remove(*models.Band.objects.filter(name__in=payload.bands))
+        return list(event.bands.all())
