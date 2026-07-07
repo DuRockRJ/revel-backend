@@ -29,19 +29,19 @@ class BootstrapState:
         return " ".join(self.fake.address().split())
 
     def load_cities(self) -> None:
-        """Load cities for events."""
-        self.cities["vienna"] = City.objects.get(name="Vienna", country="Austria")
-        new_york = City.objects.filter(name="New York", country="United States").first()
-        london = City.objects.filter(name="London", country="United Kingdom").first()
-        berlin = City.objects.filter(name="Berlin", country="Germany").first()
-        tokyo = City.objects.filter(name="Tokyo", country="Japan").first()
+        """Load Rio de Janeiro cities/bairros for events."""
+        self.cities["copacabana"] = City.objects.get(name="Copacabana")
+        barra_da_tijuca = City.objects.filter(name="Barra da Tijuca").first()
+        lapa = City.objects.filter(name="Lapa").first()
+        tijuca = City.objects.filter(name="Tijuca").first()
+        niteroi = City.objects.filter(name="Niterói").first()
 
-        assert new_york is not None, "New York city not found"
-        assert london is not None, "London city not found"
-        assert berlin is not None, "Berlin city not found"
-        assert tokyo is not None, "Tokyo city not found"
+        assert barra_da_tijuca is not None, "Barra da Tijuca city not found"
+        assert lapa is not None, "Lapa city not found"
+        assert tijuca is not None, "Tijuca city not found"
+        assert niteroi is not None, "Niterói city not found"
 
-        self.cities["new_york"] = new_york
-        self.cities["london"] = london
-        self.cities["berlin"] = berlin
-        self.cities["tokyo"] = tokyo
+        self.cities["barra_da_tijuca"] = barra_da_tijuca
+        self.cities["lapa"] = lapa
+        self.cities["tijuca"] = tijuca
+        self.cities["niteroi"] = niteroi

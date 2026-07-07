@@ -37,7 +37,7 @@ that bring communities together.
 - Seasonal celebrations
 - Private gatherings
 """,
-        city=state.cities["vienna"],
+        city=state.cities["copacabana"],
         stripe_account_id=config("CONNECTED_TEST_STRIPE_ID", default=None),
         stripe_charges_enabled=True,
         stripe_details_submitted=True,
@@ -94,7 +94,7 @@ cutting-edge workshops, networking events, and knowledge-sharing sessions.
 Membership is by invitation or application review. We're looking for passionate technologists
 who want to shape the future.
 """,
-        city=state.cities["berlin"],
+        city=state.cities["tijuca"],
     )
     org_beta.staff_members.add(state.users["org_beta_staff"])
 

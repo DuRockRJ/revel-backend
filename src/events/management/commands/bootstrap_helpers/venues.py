@@ -20,7 +20,7 @@ def create_venues(state: BootstrapState) -> None:
         name="Revel Concert Hall",
         slug="revel-concert-hall",
         description="A modern concert venue with flexible seating arrangements.",
-        city=state.cities["vienna"],
+        city=state.cities["copacabana"],
         address="Musikvereinsplatz 1, 1010 Vienna, Austria",
         capacity=100,
     )

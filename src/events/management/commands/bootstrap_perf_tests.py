@@ -64,7 +64,7 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             # Load city
-            self.city = City.objects.get(name="Vienna", country="Austria")
+            self.city = City.objects.get(name="Copacabana")
 
             # Create users
             self._create_admin_users()
@@ -248,7 +248,7 @@ This organization is used for Locust performance testing.
                 "end": now + timedelta(days=30, hours=3),
                 "max_attendees": 0,  # Unlimited
                 "description": "Performance test event for RSVP flow testing.",
-                "address": "Test Venue, Vienna",
+                "address": "Test Venue, Copacabana",
             },
         )
 
@@ -268,7 +268,7 @@ This organization is used for Locust performance testing.
                 "max_attendees": 50,  # Limited capacity
                 "waitlist_open": True,
                 "description": "Performance test event with limited capacity.",
-                "address": "Test Venue, Vienna",
+                "address": "Test Venue, Copacabana",
             },
         )
 
@@ -288,7 +288,7 @@ This organization is used for Locust performance testing.
                 "max_attendees": TICKET_TIER_CAPACITY,
                 "max_tickets_per_user": None,  # Unlimited for perf testing
                 "description": "Performance test event for free ticket checkout.",
-                "address": "Test Venue, Vienna",
+                "address": "Test Venue, Copacabana",
             },
         )
 
@@ -308,7 +308,7 @@ This organization is used for Locust performance testing.
                 "max_attendees": TICKET_TIER_CAPACITY,
                 "max_tickets_per_user": None,  # Unlimited for perf testing
                 "description": "Performance test event for PWYC checkout.",
-                "address": "Test Venue, Vienna",
+                "address": "Test Venue, Copacabana",
             },
         )
 
@@ -327,7 +327,7 @@ This organization is used for Locust performance testing.
                 "end": now + timedelta(days=50, hours=3),
                 "max_attendees": 0,
                 "description": "Performance test event with questionnaire requirement.",
-                "address": "Test Venue, Vienna",
+                "address": "Test Venue, Copacabana",
             },
         )
 

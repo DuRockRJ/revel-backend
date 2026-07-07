@@ -33,7 +33,7 @@ class Command(BaseCommand):
         self.now = timezone.now()
 
         # Load city
-        self.city = City.objects.get(name="Vienna", country="Austria")
+        self.city = City.objects.get(name="Copacabana")
 
         # Create users
         self._create_users()
@@ -248,7 +248,7 @@ This event has:
 
 **Expected NextStep:** RSVP
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 2: Requires questionnaire completion
@@ -274,7 +274,7 @@ This event has:
 **Expected NextStep:** COMPLETE_QUESTIONNAIRE
 **Expected Reason:** Questionnaire has not been filled
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
         self.org_questionnaire.events.add(event_with_questionnaire)
         self.events["questionnaire"] = event_with_questionnaire
@@ -302,7 +302,7 @@ This event has:
 **Expected NextStep:** BECOME_MEMBER
 **Expected Reason:** Only members are allowed
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 4: Private event (requires invitation)
@@ -328,7 +328,7 @@ This event has:
 **Expected NextStep:** REQUEST_INVITATION
 **Expected Reason:** Requires invitation
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 5: Event at capacity (full)
@@ -357,7 +357,7 @@ This event has:
 **Expected NextStep:** JOIN_WAITLIST
 **Expected Reason:** Event is full
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 6: RSVP deadline passed
@@ -384,7 +384,7 @@ This event has:
 **Expected NextStep:** None
 **Expected Reason:** The RSVP deadline has passed
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 7: Tickets not yet on sale
@@ -410,7 +410,7 @@ This event has:
 **Expected NextStep:** None
 **Expected Reason:** Tickets are not currently on sale
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 8: Draft event (not open)
@@ -436,7 +436,7 @@ This event has:
 **Expected NextStep:** WAIT_FOR_EVENT_TO_OPEN
 **Expected Reason:** Event is not open
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 9: Past event (finished)
@@ -462,7 +462,7 @@ This event has:
 **Expected NextStep:** None
 **Expected Reason:** Event has finished
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 10: Requires ticket purchase
@@ -489,7 +489,7 @@ This event has:
 **Expected NextStep:** PURCHASE_TICKET
 **Expected Reason:** Requires purchase
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         # Event 11: Sold out ticketed event
@@ -518,7 +518,7 @@ This event has:
 **Expected NextStep:** JOIN_WAITLIST
 **Expected Reason:** Sold out
 """,
-            address="Test Venue, Vienna, Austria",
+            address="Test Venue, Copacabana, Brazil",
         )
 
         logger.info(f"Created {len(self.events)} test events")
