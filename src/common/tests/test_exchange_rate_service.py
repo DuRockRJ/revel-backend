@@ -6,6 +6,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.conf import settings
 
 from common.models import ExchangeRate
 from common.service.exchange_rate_service import (
@@ -35,7 +36,7 @@ def _clear_seed_rates() -> None:
 @pytest.fixture
 def exchange_rate() -> ExchangeRate:
     return ExchangeRate.objects.create(
-        base="EUR",
+        base=settings.DEFAULT_CURRENCY,
         date=datetime.date(2026, 3, 20),
         rates=SAMPLE_RATES,
     )
@@ -44,7 +45,7 @@ def exchange_rate() -> ExchangeRate:
 @pytest.fixture
 def older_exchange_rate() -> ExchangeRate:
     return ExchangeRate.objects.create(
-        base="EUR",
+        base=settings.DEFAULT_CURRENCY,
         date=datetime.date(2026, 3, 19),
         rates={"USD": 1.07, "GBP": 0.85, "JPY": 161.0, "CHF": 0.96},
     )
@@ -52,14 +53,14 @@ def older_exchange_rate() -> ExchangeRate:
 
 def test_get_latest_rates(exchange_rate: ExchangeRate) -> None:
     """Test fetching the latest exchange rate record."""
-    result = get_latest_rates("EUR")
+    result = get_latest_rates(settings.DEFAULT_CURRENCY)
     assert result.id == exchange_rate.id
     assert result.date == datetime.date(2026, 3, 20)
 
 
 def test_get_latest_rates_returns_most_recent(exchange_rate: ExchangeRate, older_exchange_rate: ExchangeRate) -> None:
     """Test that latest() returns the most recent date."""
-    result = get_latest_rates("EUR")
+    result = get_latest_rates(settings.DEFAULT_CURRENCY)
     assert result.date == datetime.date(2026, 3, 20)
 
 
@@ -70,13 +71,13 @@ def test_get_rate_same_currency() -> None:
 
 def test_get_rate_from_base(exchange_rate: ExchangeRate) -> None:
     """Test rate from base currency to target."""
-    rate = get_rate("EUR", "USD")
+    rate = get_rate(settings.DEFAULT_CURRENCY, "USD")
     assert rate == Decimal("1.08")
 
 
 def test_get_rate_to_base(exchange_rate: ExchangeRate) -> None:
     """Test rate from target currency to base."""
-    rate = get_rate("USD", "EUR")
+    rate = get_rate("USD", settings.DEFAULT_CURRENCY)
     assert rate == Decimal("1") / Decimal("1.08")
 
 
@@ -89,7 +90,7 @@ def test_get_rate_cross(exchange_rate: ExchangeRate) -> None:
 
 def test_get_rate_for_specific_date(exchange_rate: ExchangeRate, older_exchange_rate: ExchangeRate) -> None:
     """Test that a specific date uses the nearest available rate on or before."""
-    rate = get_rate("EUR", "USD", date=datetime.date(2026, 3, 19))
+    rate = get_rate(settings.DEFAULT_CURRENCY, "USD", date=datetime.date(2026, 3, 19))
     assert rate == Decimal("1.07")
 
 
@@ -100,14 +101,14 @@ def test_convert_same_currency() -> None:
 
 
 def test_convert_to_different_currency(exchange_rate: ExchangeRate) -> None:
-    """Test converting EUR to USD."""
-    result = convert(Decimal("100.00"), "EUR", "USD")
+    """Test converting the base currency to USD."""
+    result = convert(Decimal("100.00"), settings.DEFAULT_CURRENCY, "USD")
     assert result == Decimal("108.00")
 
 
 def test_convert_from_non_base(exchange_rate: ExchangeRate) -> None:
-    """Test converting USD to EUR."""
-    result = convert(Decimal("108.00"), "USD", "EUR")
+    """Test converting USD to the base currency."""
+    result = convert(Decimal("108.00"), "USD", settings.DEFAULT_CURRENCY)
     assert result == Decimal("100.00")
 
 
@@ -168,13 +169,13 @@ def test_convert_using_rates_same_currency() -> None:
 
 def test_convert_using_rates_from_base() -> None:
     """Test converting from base currency to target."""
-    result = convert_using_rates(Decimal("100.00"), "EUR", "USD", {"USD": 1.08})
+    result = convert_using_rates(Decimal("100.00"), settings.DEFAULT_CURRENCY, "USD", {"USD": 1.08})
     assert result == Decimal("108.00")
 
 
 def test_convert_using_rates_to_base() -> None:
     """Test converting from target currency to base."""
-    result = convert_using_rates(Decimal("108.00"), "USD", "EUR", {"USD": 1.08})
+    result = convert_using_rates(Decimal("108.00"), "USD", settings.DEFAULT_CURRENCY, {"USD": 1.08})
     assert result == Decimal("100.00")
 
 

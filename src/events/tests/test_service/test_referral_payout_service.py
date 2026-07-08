@@ -22,6 +22,22 @@ PERIOD_START = datetime.date(2026, 2, 1)
 PERIOD_END = datetime.date(2026, 2, 28)
 
 
+@pytest.fixture(autouse=True)
+def _default_currency_exchange_rate() -> None:
+    """Ensure an ExchangeRate row exists for the platform's default currency.
+
+    calculate_payouts_for_period always fetches the latest rate for
+    settings.DEFAULT_CURRENCY, even when there's nothing to convert — the
+    migration-seeded rate (base=EUR) only helps when DEFAULT_CURRENCY is EUR.
+    """
+    ExchangeRate.objects.all().delete()
+    ExchangeRate.objects.create(
+        base=settings.DEFAULT_CURRENCY,
+        date=PERIOD_END,
+        rates={"USD": 1.08, "GBP": 0.86},
+    )
+
+
 @pytest.fixture
 def referrer(django_user_model: t.Type[RevelUser]) -> RevelUser:
     return django_user_model.objects.create_user(
@@ -482,10 +498,10 @@ def test_multi_currency_converted_to_platform_currency(
     buyer: RevelUser,
 ) -> None:
     """Test that payments in different currencies are converted to DEFAULT_CURRENCY."""
-    # Clear seed data from migration so we control the exact rates
+    # Override the autouse fixture's rates so we control the exact conversion math
     ExchangeRate.objects.all().delete()
     ExchangeRate.objects.create(
-        base="EUR",
+        base=settings.DEFAULT_CURRENCY,
         date=PERIOD_END,
         rates={"USD": 1.08, "GBP": 0.86},
     )
@@ -493,11 +509,11 @@ def test_multi_currency_converted_to_platform_currency(
     org = Organization.objects.create(name="Multi-Currency Org", owner=referred_user)
     now = timezone.now()
 
-    # EUR event
+    # Platform-currency event
     event_eur = Event.objects.create(
-        organization=org, name="EUR Event", start=now, end=now + datetime.timedelta(hours=2)
+        organization=org, name="Platform Currency Event", start=now, end=now + datetime.timedelta(hours=2)
     )
-    tier_eur = TicketTier.objects.create(event=event_eur, name="EUR", price=Decimal("50.00"))
+    tier_eur = TicketTier.objects.create(event=event_eur, name="Platform Currency", price=Decimal("50.00"))
 
     # USD event
     event_usd = Event.objects.create(
@@ -505,7 +521,7 @@ def test_multi_currency_converted_to_platform_currency(
     )
     tier_usd = TicketTier.objects.create(event=event_usd, name="USD", price=Decimal("50.00"), currency="USD")
 
-    # EUR payment: €10 net
+    # Platform-currency payment: 10 net
     _create_payment(
         tier_eur,
         buyer,
@@ -513,7 +529,7 @@ def test_multi_currency_converted_to_platform_currency(
         platform_fee_net=Decimal("10.00"),
         created_at=timezone.make_aware(datetime.datetime(2026, 2, 15, 12, 0)),
     )
-    # USD payment: $10.80 net → should convert to €10.00
+    # USD payment: $10.80 net → should convert to 10.00 platform currency
     _create_payment(
         tier_usd,
         buyer,
@@ -526,8 +542,8 @@ def test_multi_currency_converted_to_platform_currency(
 
     assert result == {"created": 1, "skipped": 0}
     payout = ReferralPayout.objects.get(referral=referral)
-    # €10.00 (EUR) + $10.80 / 1.08 = €10.00 → total €20.00
+    # 10.00 (platform currency) + $10.80 / 1.08 = 10.00 → total 20.00
     assert payout.net_platform_fees == Decimal("20.00")
-    assert payout.currency == "EUR"
+    assert payout.currency == settings.DEFAULT_CURRENCY
     # 20.00 * 15% = 3.00
     assert payout.payout_amount == Decimal("3.00")

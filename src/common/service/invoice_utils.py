@@ -17,6 +17,7 @@ CURRENCY_SYMBOLS: dict[str, str] = {
     "EUR": "\u20ac",
     "USD": "$",
     "GBP": "\u00a3",
+    "BRL": "R$ ",
     "CHF": "CHF ",
     "DKK": "DKK ",
     "SEK": "SEK ",
@@ -29,7 +30,7 @@ CURRENCY_SYMBOLS: dict[str, str] = {
 }
 
 
-def format_currency(value: Decimal | float | str, currency: str = "EUR") -> str:
+def format_currency(value: Decimal | float | str, currency: str = "BRL") -> str:
     """Format a value with a currency symbol.
 
     Accepts Decimal, float, or string (from JSON line items).

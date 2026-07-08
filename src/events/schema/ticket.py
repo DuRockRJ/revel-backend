@@ -4,6 +4,7 @@ import typing as t
 from decimal import Decimal
 from uuid import UUID
 
+from django.conf import settings
 from ninja import ModelSchema, Schema
 from pydantic import UUID4, AwareDatetime, EmailStr, Field, field_validator, model_validator
 
@@ -353,7 +354,7 @@ class TicketTierCreateSchema(TicketTierPriceValidationMixin):
     pwyc_max: Decimal | None = Field(None, ge=1)
     vat_rate: Decimal | None = Field(None, ge=0, le=100, description="VAT rate override. Null = use org default.")
 
-    currency: Currencies = Field(default="EUR", max_length=3)
+    currency: Currencies = Field(default=settings.DEFAULT_CURRENCY, max_length=3)
     sales_start_at: AwareDatetime | None = None
     sales_end_at: AwareDatetime | None = None
     total_quantity: int | None = None
