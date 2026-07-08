@@ -12,14 +12,18 @@ from decimal import Decimal
 from unittest.mock import Mock
 
 import pytest
+from django.conf import settings
 
 from common.constants import EU_MEMBER_STATES
+from common.models import SiteSettings
 from events.service.vat_service import (
+    BuyerFeeRate,
     PlatformFeeVATBreakdown,
     VATBreakdown,
     calculate_platform_fee_vat,
     calculate_vat_inclusive,
     distribute_amount_across_items,
+    get_buyer_fee_rate,
     get_effective_vat_rate,
 )
 
@@ -458,6 +462,87 @@ class TestCalculatePlatformFeeVat:
 
         assert result.reverse_charge is False
         assert result.fee_vat > Decimal("0.00")
+
+
+# ---------------------------------------------------------------------------
+# get_buyer_fee_rate
+# ---------------------------------------------------------------------------
+
+
+def _make_fee_org_mock(
+    vat_country_code: str = "",
+    vat_id: str = "",
+    vat_id_validated: bool = False,
+    platform_fee_percent: Decimal = Decimal("3.00"),
+    platform_fee_fixed: Decimal = Decimal("0.50"),
+) -> Mock:
+    """Create a mock Organization with both VAT and platform-fee-rate fields."""
+    org = _make_org_mock(vat_country_code, vat_id, vat_id_validated)
+    org.platform_fee_percent = platform_fee_percent
+    org.platform_fee_fixed = platform_fee_fixed
+    return org
+
+
+class TestGetBuyerFeeRate:
+    """Test get_buyer_fee_rate: the ingredients for the buyer-facing platform fee.
+
+    These are what the frontend uses to show "R$ 20,00 + R$ 2,00 (taxa)" and to
+    recompute the fee live as a PWYC buyer types their chosen amount.
+    """
+
+    def test_returns_org_fee_percent_unchanged(self) -> None:
+        org = _make_fee_org_mock(vat_country_code="US", platform_fee_percent=Decimal("4.50"))
+
+        rate = get_buyer_fee_rate(org, settings.DEFAULT_CURRENCY)
+
+        assert rate.percent == Decimal("4.50")
+
+    def test_same_currency_fixed_fee_is_unconverted(self) -> None:
+        """No exchange-rate lookup needed when the fixed fee's currency already matches."""
+        org = _make_fee_org_mock(vat_country_code="US", platform_fee_fixed=Decimal("0.50"))
+
+        rate = get_buyer_fee_rate(org, settings.DEFAULT_CURRENCY)
+
+        assert rate.fixed_amount == Decimal("0.50")
+
+    def test_vat_rate_zero_for_non_eu_org(self) -> None:
+        """Non-EU org: export of services, no VAT gross-up on the platform fee."""
+        org = _make_fee_org_mock(vat_country_code="US")
+
+        rate = get_buyer_fee_rate(org, settings.DEFAULT_CURRENCY)
+
+        assert rate.vat_rate == Decimal("0.00")
+
+    def test_vat_rate_zero_for_eu_reverse_charge_org(self) -> None:
+        """EU org with a validated cross-border VAT ID: reverse charge, no VAT gross-up."""
+        site = SiteSettings.get_solo()
+        site.platform_vat_country = "IT"
+        site.platform_vat_rate = Decimal("22.00")
+        site.save()
+        org = _make_fee_org_mock(vat_country_code="DE", vat_id="DE123456789", vat_id_validated=True)
+
+        rate = get_buyer_fee_rate(org, settings.DEFAULT_CURRENCY)
+
+        assert rate.vat_rate == Decimal("0.00")
+
+    def test_vat_rate_applied_for_domestic_org(self) -> None:
+        """Org in the same country as the platform: the domestic VAT rate is returned."""
+        site = SiteSettings.get_solo()
+        site.platform_vat_country = "IT"
+        site.platform_vat_rate = Decimal("22.00")
+        site.save()
+        org = _make_fee_org_mock(vat_country_code="IT", vat_id="IT12345678901", vat_id_validated=True)
+
+        rate = get_buyer_fee_rate(org, settings.DEFAULT_CURRENCY)
+
+        assert rate.vat_rate == Decimal("22.00")
+
+    def test_returns_buyer_fee_rate_namedtuple(self) -> None:
+        org = _make_fee_org_mock(vat_country_code="US")
+
+        rate = get_buyer_fee_rate(org, settings.DEFAULT_CURRENCY)
+
+        assert isinstance(rate, BuyerFeeRate)
 
 
 # ---------------------------------------------------------------------------

@@ -131,20 +131,40 @@ def _create_stripe_checkout_session(
         HttpError: If Stripe API call fails.
     """
     frontend_base_url = SiteSettings.get_solo().frontend_base_url
-    session_data = dict(  # noqa: C408
-        customer_email=user.email,
-        line_items=[
+    line_items: list[dict[str, t.Any]] = [
+        {
+            "price_data": {
+                "currency": tier.currency.lower(),
+                "product_data": {
+                    "name": f"Ticket: {event.name} ({tier.name})",
+                },
+                "unit_amount": to_stripe_amount(effective_price, tier.currency),
+            },
+            "quantity": 1,
+        }
+    ]
+    # The buyer, not the organizer, pays the platform fee: it's charged as its
+    # own line item (on top of the ticket price) so Stripe Checkout shows the
+    # breakdown, while application_fee_amount below still routes that same
+    # amount to the platform — the organizer nets the full ticket price.
+    # Skipped when this org uses the platform's own Stripe account (no fee to
+    # charge — same condition that drops application_fee_amount below).
+    is_own_stripe_account = settings.STRIPE_ACCOUNT == event.organization.stripe_account_id
+    if not is_own_stripe_account and application_fee_amount > 0:
+        line_items.append(
             {
                 "price_data": {
                     "currency": tier.currency.lower(),
-                    "product_data": {
-                        "name": f"Ticket: {event.name} ({tier.name})",
-                    },
-                    "unit_amount": to_stripe_amount(effective_price, tier.currency),
+                    "product_data": {"name": str(_("Service fee"))},
+                    "unit_amount": application_fee_amount,
                 },
                 "quantity": 1,
             }
-        ],
+        )
+
+    session_data = dict(  # noqa: C408
+        customer_email=user.email,
+        line_items=line_items,
         mode="payment",
         success_url=f"{frontend_base_url}/events/{event.organization.slug}/{event.slug}?payment_success=true",
         cancel_url=f"{frontend_base_url}/events/{event.organization.slug}/{event.slug}?payment_cancelled=true",
@@ -162,7 +182,7 @@ def _create_stripe_checkout_session(
 
     # If the organization is using the platform's own Stripe account,
     # remove connected account parameters (no fee to ourselves)
-    if settings.STRIPE_ACCOUNT == event.organization.stripe_account_id:
+    if is_own_stripe_account:
         session_data.pop("stripe_account")
         session_data["payment_intent_data"].pop("application_fee_amount")  # type: ignore[union-attr, arg-type]
 
@@ -470,6 +490,26 @@ def _create_stripe_session(
     line_items = _build_line_items(tickets, event, tier, effective_price)
     ticket_ids = ",".join(str(_t.id) for _t in tickets)
 
+    # The buyer, not the organizer, pays the platform fee: it's charged as its
+    # own line item (on top of the ticket prices) so Stripe Checkout shows the
+    # breakdown, while application_fee_amount below still routes that same
+    # amount to the platform — the organizer nets the full ticket price.
+    # Skipped when this org uses the platform's own Stripe account (no fee to
+    # charge — same condition that drops application_fee_amount below).
+    is_own_stripe_account = settings.STRIPE_ACCOUNT == event.organization.stripe_account_id
+    if not is_own_stripe_account and application_fee_amount > 0:
+        line_items = [
+            *line_items,
+            {
+                "price_data": {
+                    "currency": tier.currency.lower(),
+                    "product_data": {"name": str(_("Service fee"))},
+                    "unit_amount": application_fee_amount,
+                },
+                "quantity": 1,
+            },
+        ]
+
     frontend_base_url = site.frontend_base_url
     session_data = dict(  # noqa: C408
         customer_email=user.email,
@@ -492,7 +532,7 @@ def _create_stripe_session(
 
     # If the organization is using the platform's own Stripe account,
     # remove connected account parameters
-    if settings.STRIPE_ACCOUNT == event.organization.stripe_account_id:
+    if is_own_stripe_account:
         session_data.pop("stripe_account")
         session_data["payment_intent_data"].pop("application_fee_amount")  # type: ignore[union-attr, arg-type]
 

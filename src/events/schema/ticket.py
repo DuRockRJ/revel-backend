@@ -9,10 +9,12 @@ from ninja import ModelSchema, Schema
 from pydantic import UUID4, AwareDatetime, EmailStr, Field, HttpUrl, field_validator, model_validator
 
 from accounts.schema import BaseEmailJWTPayloadSchema, MemberUserSchema, MinimalRevelUserSchema
+from common.models import ExchangeRate
 from common.schema import OneToOneFiftyString, StrippedString, validate_country_code
 from common.signing import get_file_url
 from events import models
 from events.models import DiscountCode, Payment, Ticket, TicketTier
+from events.service.vat_service import BuyerFeeRate, get_buyer_fee_rate
 from events.utils.refund_policy import RefundPolicy, RefundPolicyTier
 
 from .event import MinimalEventSchema
@@ -60,6 +62,31 @@ Currencies = t.Literal[
 ]
 
 
+def _resolve_buyer_fee_rate(obj: TicketTier) -> BuyerFeeRate | None:
+    """Compute (and cache on the instance) the buyer-fee rate for online tiers.
+
+    ``None`` for non-online tiers — offline/at-the-door/external/free tickets never
+    have the platform fee passed on to the buyer. Cached via a private attribute so
+    the three ``buyer_fee_*`` field resolvers below share one computation (each
+    involves a currency-conversion lookup) instead of tripling it per tier.
+
+    This is a preview field, not the checkout charge itself (that's computed fresh,
+    and must fail loudly, in stripe_service._compute_platform_fee_vat) — so a missing
+    exchange rate for the tier's currency degrades to ``None`` instead of a 500.
+    """
+    if obj.payment_method != TicketTier.PaymentMethod.ONLINE:
+        return None
+    cached = getattr(obj, "_buyer_fee_rate", "unset")
+    if cached == "unset":
+        org = obj.event.organization if obj.event else None
+        try:
+            cached = get_buyer_fee_rate(org, obj.currency) if org else None
+        except ExchangeRate.DoesNotExist:
+            cached = None
+        obj._buyer_fee_rate = cached  # type: ignore[attr-defined]
+    return t.cast("BuyerFeeRate | None", cached)
+
+
 class TicketTierSchema(ModelSchema):
     id: UUID
     event_id: UUID
@@ -74,6 +101,9 @@ class TicketTierSchema(ModelSchema):
     can_purchase: bool = True
     invoicing_available: bool = False
     refund_policy: RefundPolicySchema | None = None
+    buyer_fee_percent: Decimal | None = None
+    buyer_fee_fixed_amount: Decimal | None = None
+    buyer_fee_vat_rate: Decimal | None = None
 
     class Meta:
         model = TicketTier
@@ -114,6 +144,24 @@ class TicketTierSchema(ModelSchema):
             models.Organization.InvoicingMode.HYBRID,
             models.Organization.InvoicingMode.AUTO,
         )
+
+    @staticmethod
+    def resolve_buyer_fee_percent(obj: TicketTier) -> Decimal | None:
+        """The platform fee's percentage component, for online tiers only."""
+        rate = _resolve_buyer_fee_rate(obj)
+        return rate.percent if rate else None
+
+    @staticmethod
+    def resolve_buyer_fee_fixed_amount(obj: TicketTier) -> Decimal | None:
+        """The platform fee's fixed component, converted to the tier's currency."""
+        rate = _resolve_buyer_fee_rate(obj)
+        return rate.fixed_amount if rate else None
+
+    @staticmethod
+    def resolve_buyer_fee_vat_rate(obj: TicketTier) -> Decimal | None:
+        """VAT rate to gross the fee up by (0 when not applicable — see get_buyer_fee_rate)."""
+        rate = _resolve_buyer_fee_rate(obj)
+        return rate.vat_rate if rate else None
 
 
 class PaymentSchema(ModelSchema):
@@ -461,6 +509,9 @@ class TicketTierDetailSchema(ModelSchema):
     vat_rate: Decimal | None = None
     invoicing_available: bool = False
     refund_policy: RefundPolicySchema | None = None
+    buyer_fee_percent: Decimal | None = None
+    buyer_fee_fixed_amount: Decimal | None = None
+    buyer_fee_vat_rate: Decimal | None = None
 
     class Meta:
         model = TicketTier
@@ -505,6 +556,24 @@ class TicketTierDetailSchema(ModelSchema):
             models.Organization.InvoicingMode.HYBRID,
             models.Organization.InvoicingMode.AUTO,
         )
+
+    @staticmethod
+    def resolve_buyer_fee_percent(obj: TicketTier) -> Decimal | None:
+        """The platform fee's percentage component, for online tiers only."""
+        rate = _resolve_buyer_fee_rate(obj)
+        return rate.percent if rate else None
+
+    @staticmethod
+    def resolve_buyer_fee_fixed_amount(obj: TicketTier) -> Decimal | None:
+        """The platform fee's fixed component, converted to the tier's currency."""
+        rate = _resolve_buyer_fee_rate(obj)
+        return rate.fixed_amount if rate else None
+
+    @staticmethod
+    def resolve_buyer_fee_vat_rate(obj: TicketTier) -> Decimal | None:
+        """VAT rate to gross the fee up by (0 when not applicable — see get_buyer_fee_rate)."""
+        rate = _resolve_buyer_fee_rate(obj)
+        return rate.vat_rate if rate else None
 
 
 class ReorderSchema(Schema):

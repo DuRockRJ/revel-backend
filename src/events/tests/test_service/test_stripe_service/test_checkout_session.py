@@ -399,3 +399,98 @@ class TestCreateCheckoutSession:
         assert payment.platform_fee_vat == Decimal("0.28")
         assert payment.platform_fee_vat_rate == Decimal("22.00")
         assert payment.platform_fee_reverse_charge is False
+
+    @patch("stripe.checkout.Session.create")
+    def test_buyer_fee_charged_as_separate_line_item(
+        self,
+        mock_stripe_create: Mock,
+        event: Event,
+        paid_ticket_tier: TicketTier,
+        stripe_connected_organization: Organization,
+        organization_owner_user: RevelUser,
+    ) -> None:
+        """The buyer, not the organizer, pays the platform fee.
+
+        Stripe Checkout must show it as its own line item on top of the ticket
+        price — application_fee_amount (what Stripe routes to the platform) is
+        unaffected, so the organizer's Connect payout still nets the full price.
+        """
+        event.organization = stripe_connected_organization
+        event.save()
+        paid_ticket_tier.event = event
+        paid_ticket_tier.save()
+
+        mock_session = Mock()
+        mock_session.id = "cs_fee_line_item_test"
+        mock_session.url = "https://checkout.stripe.com/pay/cs_fee_line_item_test"
+        mock_stripe_create.return_value = mock_session
+
+        stripe_service.create_checkout_session(event, paid_ticket_tier, organization_owner_user)
+
+        call_args = mock_stripe_create.call_args
+        line_items = call_args[1]["line_items"]
+        expected_fee_cents = call_args[1]["payment_intent_data"]["application_fee_amount"]
+
+        assert len(line_items) == 2
+        assert line_items[0]["price_data"]["unit_amount"] == 2500  # ticket price, unchanged
+        assert line_items[1]["price_data"]["unit_amount"] == expected_fee_cents
+        assert line_items[1]["price_data"]["currency"] == paid_ticket_tier.currency.lower()
+        assert line_items[1]["price_data"]["product_data"]["name"]  # non-empty label
+        assert line_items[1]["quantity"] == 1
+
+    @patch("stripe.checkout.Session.create")
+    def test_no_fee_line_item_when_using_platforms_own_stripe_account(
+        self,
+        mock_stripe_create: Mock,
+        event: Event,
+        paid_ticket_tier: TicketTier,
+        stripe_connected_organization: Organization,
+        organization_owner_user: RevelUser,
+    ) -> None:
+        """No fee to charge (or route) when the org uses the platform's own Stripe account."""
+        stripe_connected_organization.stripe_account_id = settings.STRIPE_ACCOUNT
+        stripe_connected_organization.save()
+        event.organization = stripe_connected_organization
+        event.save()
+        paid_ticket_tier.event = event
+        paid_ticket_tier.save()
+
+        mock_session = Mock()
+        mock_session.id = "cs_own_account_test"
+        mock_session.url = "https://checkout.stripe.com/pay/cs_own_account_test"
+        mock_stripe_create.return_value = mock_session
+
+        stripe_service.create_checkout_session(event, paid_ticket_tier, organization_owner_user)
+
+        call_args = mock_stripe_create.call_args
+        assert len(call_args[1]["line_items"]) == 1
+        assert "application_fee_amount" not in call_args[1]["payment_intent_data"]
+
+    @patch("stripe.checkout.Session.create")
+    def test_no_fee_line_item_when_fee_is_zero(
+        self,
+        mock_stripe_create: Mock,
+        event: Event,
+        paid_ticket_tier: TicketTier,
+        stripe_connected_organization: Organization,
+        organization_owner_user: RevelUser,
+    ) -> None:
+        """No fee line item is added when the org's fee rate computes to zero."""
+        stripe_connected_organization.platform_fee_percent = Decimal("0")
+        stripe_connected_organization.platform_fee_fixed = Decimal("0")
+        stripe_connected_organization.save()
+        event.organization = stripe_connected_organization
+        event.save()
+        paid_ticket_tier.event = event
+        paid_ticket_tier.save()
+
+        mock_session = Mock()
+        mock_session.id = "cs_zero_fee_test"
+        mock_session.url = "https://checkout.stripe.com/pay/cs_zero_fee_test"
+        mock_stripe_create.return_value = mock_session
+
+        stripe_service.create_checkout_session(event, paid_ticket_tier, organization_owner_user)
+
+        call_args = mock_stripe_create.call_args
+        assert len(call_args[1]["line_items"]) == 1
+        assert call_args[1]["payment_intent_data"]["application_fee_amount"] == 0

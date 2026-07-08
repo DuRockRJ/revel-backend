@@ -12,6 +12,10 @@ events-specific wrappers and re-exports.
 import typing as t
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.conf import settings
+
+from common.models import SiteSettings
+from common.service.exchange_rate_service import convert as convert_currency
 from common.service.vat_utils import (
     TWO_PLACES,
     B2BFeeVATBreakdown,
@@ -101,3 +105,29 @@ def distribute_amount_across_items(total: Decimal, count: int) -> list[Decimal]:
         result[i] += penny
 
     return result
+
+
+class BuyerFeeRate(t.NamedTuple):
+    """Ingredients to compute the buyer-facing platform fee for any price.
+
+    ``net = price * percent / 100 + fixed_amount``; ``gross = net * (1 + vat_rate / 100)``.
+    Used both to precompute the fee for fixed-price tiers and, on the frontend, to
+    recompute it live as a PWYC buyer types their chosen amount.
+    """
+
+    percent: Decimal
+    fixed_amount: Decimal
+    vat_rate: Decimal
+
+
+def get_buyer_fee_rate(org: "Organization", currency: str) -> BuyerFeeRate:
+    """Return the platform-fee rate ingredients for ``currency``.
+
+    ``vat_rate`` is 0 whenever the platform-fee VAT doesn't apply (reverse charge
+    or the organization is outside the platform's VAT area) — see
+    :func:`calculate_platform_fee_vat`.
+    """
+    fixed_amount = convert_currency(org.platform_fee_fixed, settings.DEFAULT_CURRENCY, currency)
+    site = SiteSettings.get_solo()
+    zero_fee_vat = calculate_platform_fee_vat(Decimal("0"), org, site.platform_vat_country, site.platform_vat_rate)
+    return BuyerFeeRate(percent=org.platform_fee_percent, fixed_amount=fixed_amount, vat_rate=zero_fee_vat.fee_vat_rate)
