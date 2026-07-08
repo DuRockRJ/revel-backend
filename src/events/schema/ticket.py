@@ -6,7 +6,7 @@ from uuid import UUID
 
 from django.conf import settings
 from ninja import ModelSchema, Schema
-from pydantic import UUID4, AwareDatetime, EmailStr, Field, field_validator, model_validator
+from pydantic import UUID4, AwareDatetime, EmailStr, Field, HttpUrl, field_validator, model_validator
 
 from accounts.schema import BaseEmailJWTPayloadSchema, MemberUserSchema, MinimalRevelUserSchema
 from common.schema import OneToOneFiftyString, StrippedString, validate_country_code
@@ -91,6 +91,7 @@ class TicketTierSchema(ModelSchema):
             "purchasable_by",
             "payment_method",
             "manual_payment_instructions",
+            "external_ticket_url",
             "seat_assignment_mode",
             "max_tickets_per_user",
             "display_order",
@@ -333,12 +334,20 @@ class AdminRefundTicketSchema(AdminCancelTicketSchema):
 class TicketTierPriceValidationMixin(Schema):
     payment_method: TicketTier.PaymentMethod = TicketTier.PaymentMethod.OFFLINE
     price: Decimal = Field(default=Decimal("0"), ge=0)
+    external_ticket_url: HttpUrl | None = None
 
     @model_validator(mode="after")
     def validate_minimum_price(self) -> t.Self:
         """Validate the minimum price for ONLINE payments."""
         if self.payment_method == TicketTier.PaymentMethod.ONLINE and self.price < Decimal("1"):
             raise ValueError("Minimum price for ONLINE payments should be at least 1.")
+        return self
+
+    @model_validator(mode="after")
+    def validate_external_url(self) -> t.Self:
+        """Require an external ticket URL when payment_method is EXTERNAL."""
+        if self.payment_method == TicketTier.PaymentMethod.EXTERNAL and not self.external_ticket_url:
+            raise ValueError("An external ticket URL is required for the 'external' payment method.")
         return self
 
 
@@ -476,6 +485,7 @@ class TicketTierDetailSchema(ModelSchema):
             "total_quantity",
             "quantity_sold",
             "manual_payment_instructions",
+            "external_ticket_url",
             "restricted_to_membership_tiers",
             "seat_assignment_mode",
             "max_tickets_per_user",

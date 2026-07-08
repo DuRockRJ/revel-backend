@@ -236,6 +236,7 @@ class TicketTier(TimeStampedModel, VisibilityMixin):
         OFFLINE = "offline", "Offline"
         AT_THE_DOOR = "at_the_door", "At The Door"
         FREE = "free", "Free"
+        EXTERNAL = "external", "External"
 
     class PriceType(models.TextChoices):
         FIXED = "fixed", "Fixed Price"
@@ -297,6 +298,12 @@ class TicketTier(TimeStampedModel, VisibilityMixin):
     total_quantity = models.PositiveIntegerField(default=None, null=True, blank=True)
     quantity_sold = models.PositiveIntegerField(default=0)
     manual_payment_instructions = MarkdownField(null=True, blank=True)
+    external_ticket_url = models.URLField(
+        null=True,
+        blank=True,
+        help_text="Where buyers purchase this ticket when it's sold on an external platform "
+        "(e.g. Sympla, Eventbrite). Only used when payment_method is 'external'.",
+    )
     restricted_to_membership_tiers = models.ManyToManyField(
         MembershipTier,
         related_name="restricted_ticket_tiers",
@@ -465,6 +472,13 @@ class TicketTier(TimeStampedModel, VisibilityMixin):
                 }
             )
 
+    def _validate_external_payment(self) -> None:
+        """Validate that an external URL is set if and only if payment_method is EXTERNAL."""
+        if self.payment_method == self.PaymentMethod.EXTERNAL and not self.external_ticket_url:
+            raise DjangoValidationError(
+                {"external_ticket_url": "An external ticket URL is required for the 'external' payment method."}
+            )
+
     def clean(self) -> None:
         """Validate sales window, PWYC, membership tier, venue/sector, and invitation restriction constraints."""
         super().clean()
@@ -473,6 +487,7 @@ class TicketTier(TimeStampedModel, VisibilityMixin):
         self._validate_membership_tiers()
         self._validate_venue_sector()
         self._validate_invitation_restrictions()
+        self._validate_external_payment()
 
     def can_purchase(self) -> bool:
         """Check if the ticket can be purchased."""

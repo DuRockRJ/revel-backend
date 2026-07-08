@@ -77,6 +77,17 @@ class TestCreateBatch:
             total_quantity=100,
         )
 
+    @pytest.fixture
+    def external_tier(self, event: Event) -> TicketTier:
+        """Create a ticket tier sold on an external platform."""
+        return TicketTier.objects.create(
+            event=event,
+            name="Sold on Sympla",
+            payment_method=TicketTier.PaymentMethod.EXTERNAL,
+            external_ticket_url="https://www.sympla.com.br/evento/exemplo",
+            total_quantity=100,
+        )
+
     def test_free_checkout_creates_active_tickets(
         self,
         event: Event,
@@ -159,6 +170,21 @@ class TestCreateBatch:
         result = service.create_batch(items)
         assert result == "https://checkout.stripe.com/test"
         mock_stripe.assert_called_once()
+
+    def test_external_checkout_rejected(
+        self,
+        event: Event,
+        external_tier: TicketTier,
+        member_user: RevelUser,
+    ) -> None:
+        """Should reject batch checkout for an external tier — buyers use the external link instead."""
+        service = BatchTicketService(event, external_tier, member_user)
+        items = [TicketPurchaseItem(guest_name="Guest 1")]
+
+        with pytest.raises(HttpError) as exc_info:
+            service.create_batch(items)
+
+        assert exc_info.value.status_code == 400
 
     def test_updates_quantity_sold(
         self,

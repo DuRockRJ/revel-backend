@@ -110,3 +110,26 @@ class TestTicketTierValidation:
         )
         # Should not raise ValidationError
         tier.clean()
+
+    def test_external_payment_without_url_fails_validation(self, public_event: Event) -> None:
+        """Test that payment_method=EXTERNAL without an external_ticket_url fails validation."""
+        tier = TicketTier(
+            event=public_event,
+            name="Sold Elsewhere",
+            payment_method=TicketTier.PaymentMethod.EXTERNAL,
+        )
+        with pytest.raises(ValidationError) as exc_info:
+            tier.clean()
+
+        assert "external_ticket_url" in exc_info.value.message_dict
+
+    def test_external_payment_with_url_passes_validation(self, public_event: Event) -> None:
+        """Test that payment_method=EXTERNAL with an external_ticket_url passes validation."""
+        tier = TicketTier(
+            event=public_event,
+            name="Sold Elsewhere",
+            payment_method=TicketTier.PaymentMethod.EXTERNAL,
+            external_ticket_url="https://www.sympla.com.br/evento/exemplo",
+        )
+        # Should not raise ValidationError
+        tier.clean()

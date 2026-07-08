@@ -515,6 +515,8 @@ class BatchTicketService:
                 return self._at_the_door_checkout(items, seats, locked_tier, price_override)
             case TicketTier.PaymentMethod.FREE:
                 return self._free_checkout(items, seats, locked_tier)
+            case TicketTier.PaymentMethod.EXTERNAL:
+                raise HttpError(400, str(_("This tier is sold on an external platform; use its external link.")))
             case _:
                 raise HttpError(400, str(_("Unknown payment method.")))
 

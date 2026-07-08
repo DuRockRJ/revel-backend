@@ -95,6 +95,42 @@ def test_create_ticket_tier_by_owner(organization_owner_client: Client, event: E
     assert tier.price == Decimal("25.00")
 
 
+def test_create_ticket_tier_external_requires_url(organization_owner_client: Client, event: Event) -> None:
+    """Test that payment_method='external' without external_ticket_url is rejected."""
+    url = reverse("api:create_ticket_tier", kwargs={"event_id": event.pk})
+    payload = {
+        "name": "Ingresso Externo",
+        "payment_method": "external",
+        "purchasable_by": "public",
+    }
+
+    response = organization_owner_client.post(url, data=orjson.dumps(payload), content_type="application/json")
+
+    assert response.status_code == 422
+
+
+def test_create_ticket_tier_external_with_url(organization_owner_client: Client, event: Event) -> None:
+    """Test that an external tier can be created with a URL and no price is required."""
+    url = reverse("api:create_ticket_tier", kwargs={"event_id": event.pk})
+    payload = {
+        "name": "Ingresso Externo",
+        "payment_method": "external",
+        "purchasable_by": "public",
+        "external_ticket_url": "https://www.sympla.com.br/evento/exemplo",
+    }
+
+    response = organization_owner_client.post(url, data=orjson.dumps(payload), content_type="application/json")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["payment_method"] == "external"
+    assert data["external_ticket_url"] == "https://www.sympla.com.br/evento/exemplo"
+    assert data["price"] == "0.00"
+
+    tier = TicketTier.objects.get(pk=data["id"])
+    assert tier.external_ticket_url == "https://www.sympla.com.br/evento/exemplo"
+
+
 def test_create_ticket_tier_by_staff_with_permission(organization_staff_client: Client, event: Event) -> None:
     """Test that staff with edit_event permission can create a ticket tier."""
     from events.models import TicketTier
