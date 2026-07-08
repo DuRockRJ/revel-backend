@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 import structlog
 from django.conf import settings
 
-from events.models import Ticket
+from events.models import DEFAULT_TICKET_TIER_NAME, Ticket
 from events.utils import get_event_timezone
 from wallet.apple.formatting import (
     PassColors,
@@ -175,7 +175,7 @@ class ApplePassGenerator:
             event_end=event.end,
             event_tz=get_event_timezone(event),
             address=(venue.full_address() if venue else None) or event.address or None,
-            ticket_tier=ticket.tier.name if ticket.tier else "General Admission",
+            ticket_tier=ticket.tier.name if ticket.tier else DEFAULT_TICKET_TIER_NAME,
             ticket_price=ticket_price,
             colors=get_theme_colors(),
             logo_image=logo_image,

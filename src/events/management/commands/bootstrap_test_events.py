@@ -529,7 +529,7 @@ This event has:
 
         # Tickets not yet on sale event
         events_models.TicketTier.objects.filter(
-            event=self.events["tickets_not_on_sale"], name="General Admission"
+            event=self.events["tickets_not_on_sale"], name=events_models.DEFAULT_TICKET_TIER_NAME
         ).update(
             visibility=events_models.TicketTier.Visibility.PUBLIC,
             payment_method=events_models.TicketTier.PaymentMethod.ONLINE,
@@ -544,8 +544,10 @@ This event has:
         )
 
         # Requires ticket event (tickets currently on sale)
-        events_models.TicketTier.objects.filter(event=self.events["requires_ticket"], name="General Admission").update(
-            name="General Admission",
+        events_models.TicketTier.objects.filter(
+            event=self.events["requires_ticket"], name=events_models.DEFAULT_TICKET_TIER_NAME
+        ).update(
+            name=events_models.DEFAULT_TICKET_TIER_NAME,
             visibility=events_models.TicketTier.Visibility.PUBLIC,
             payment_method=events_models.TicketTier.PaymentMethod.ONLINE,
             purchasable_by=events_models.TicketTier.PurchasableBy.PUBLIC,
@@ -559,8 +561,10 @@ This event has:
         )
 
         # Sold out event
-        events_models.TicketTier.objects.filter(event=self.events["sold_out"], name="General Admission").update(
-            name="General Admission",
+        events_models.TicketTier.objects.filter(
+            event=self.events["sold_out"], name=events_models.DEFAULT_TICKET_TIER_NAME
+        ).update(
+            name=events_models.DEFAULT_TICKET_TIER_NAME,
             visibility=events_models.TicketTier.Visibility.PUBLIC,
             payment_method=events_models.TicketTier.PaymentMethod.ONLINE,
             purchasable_by=events_models.TicketTier.PurchasableBy.PUBLIC,
@@ -594,7 +598,9 @@ This event has:
             )
 
         # Create tickets for sold out event
-        sold_out_tier = events_models.TicketTier.objects.get(event=self.events["sold_out"], name="General Admission")
+        sold_out_tier = events_models.TicketTier.objects.get(
+            event=self.events["sold_out"], name=events_models.DEFAULT_TICKET_TIER_NAME
+        )
 
         for i in range(5):
             ticket_user = RevelUser.objects.create_user(

@@ -3,7 +3,7 @@
 import pytest
 
 from accounts.models import DietaryPreference, DietaryRestriction, FoodItem, RevelUser, UserDietaryPreference
-from events.models import Event, EventRSVP, OrganizationStaff, Ticket, TicketTier
+from events.models import DEFAULT_TICKET_TIER_NAME, Event, EventRSVP, OrganizationStaff, Ticket, TicketTier
 from events.service import event_service
 
 pytestmark = pytest.mark.django_db
@@ -42,7 +42,7 @@ def general_tier(event: Event) -> TicketTier:
     """
     tier, _ = TicketTier.objects.get_or_create(
         event=event,
-        name="General Admission",
+        name=DEFAULT_TICKET_TIER_NAME,
         defaults={
             "visibility": TicketTier.Visibility.PUBLIC,
             "payment_method": TicketTier.PaymentMethod.FREE,

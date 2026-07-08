@@ -15,7 +15,7 @@ import pytest
 from django.utils import timezone
 from freezegun import freeze_time
 
-from events.models import Event, EventSeries, RecurrenceRule
+from events.models import DEFAULT_TICKET_TIER_NAME, Event, EventSeries, RecurrenceRule
 from events.models.mixins import ResourceVisibility
 from events.service import recurrence_service
 
@@ -127,8 +127,8 @@ class TestMaterializeOccurrence:
         tiers = list(event.ticket_tiers.all())
         assert len(tiers) >= 1
         tier_names = [t.name for t in tiers]
-        assert "General Admission" in tier_names
-        ga_tier = next(t for t in tiers if t.name == "General Admission")
+        assert DEFAULT_TICKET_TIER_NAME in tier_names
+        ga_tier = next(t for t in tiers if t.name == DEFAULT_TICKET_TIER_NAME)
         assert ga_tier.quantity_sold == 0  # Reset
 
     def test_raises_value_error_when_no_template(

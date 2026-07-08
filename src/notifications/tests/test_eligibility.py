@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from accounts.models import RevelUser
 from events.models import (
+    DEFAULT_TICKET_TIER_NAME,
     Event,
     EventInvitation,
     EventRSVP,
@@ -136,8 +137,8 @@ def event(organization: Organization) -> Event:
 @pytest.fixture
 def ticket_tier(event: Event) -> TicketTier:
     """Ticket tier for the event (auto-created by signal when requires_ticket=True)."""
-    # Signal auto-creates "General Admission" tier when event.requires_ticket=True
-    return TicketTier.objects.get(event=event, name="General Admission")
+    # Signal auto-creates a default tier (DEFAULT_TICKET_TIER_NAME) when event.requires_ticket=True
+    return TicketTier.objects.get(event=event, name=DEFAULT_TICKET_TIER_NAME)
 
 
 @pytest.fixture

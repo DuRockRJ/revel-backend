@@ -342,7 +342,7 @@ This organization is used for Locust performance testing.
         # Free ticket tier - update_or_create to ensure settings are applied
         events_models.TicketTier.objects.update_or_create(
             event=self.events["ticket_free"],
-            name="General Admission",
+            name=events_models.DEFAULT_TICKET_TIER_NAME,
             defaults={
                 "visibility": events_models.TicketTier.Visibility.PUBLIC,
                 "payment_method": events_models.TicketTier.PaymentMethod.FREE,
@@ -360,7 +360,7 @@ This organization is used for Locust performance testing.
         # Delete default tier and create/update PWYC tier
         events_models.TicketTier.objects.filter(
             event=self.events["ticket_pwyc"],
-            name="General Admission",
+            name=events_models.DEFAULT_TICKET_TIER_NAME,
         ).delete()
 
         events_models.TicketTier.objects.update_or_create(

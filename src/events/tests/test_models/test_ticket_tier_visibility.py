@@ -78,7 +78,7 @@ class TestTicketTierForUserVisibility:
         visible_tiers = TicketTier.objects.for_user(user)
 
         # The public_event fixture has requires_ticket=True, so the signal creates
-        # a "General Admission" tier. We also created `public_tier_on_public_event`.
+        # a default tier (DEFAULT_TICKET_TIER_NAME). We also created `public_tier_on_public_event`.
         # Both are public and on a public event, so both should be visible.
         default_public_tier = TicketTier.objects.get(event=public_event, name=DEFAULT_TICKET_TIER_NAME)
 

@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from accounts.models import RevelUser
 from events.models import (
+    DEFAULT_TICKET_TIER_NAME,
     Event,
     EventInvitation,
     EventRSVP,
@@ -81,7 +82,7 @@ def unlisted_event(organization: Organization) -> Event:
 
 @pytest.fixture
 def ticket_tier(unlisted_event: Event) -> TicketTier:
-    return TicketTier.objects.get(event=unlisted_event, name="General Admission")
+    return TicketTier.objects.get(event=unlisted_event, name=DEFAULT_TICKET_TIER_NAME)
 
 
 @pytest.fixture

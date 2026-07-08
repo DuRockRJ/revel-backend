@@ -620,9 +620,9 @@ def test_reorder_ticket_tiers_by_owner(
 ) -> None:
     """Test that an event owner can reorder ticket tiers successfully.
 
-    The event has two tiers: a default "General Admission" tier created by a signal
-    and the event_ticket_tier fixture. Reordering should update display_order to
-    match the submitted list position.
+    The event has two tiers: a default tier (DEFAULT_TICKET_TIER_NAME) created by a
+    signal and the event_ticket_tier fixture. Reordering should update display_order
+    to match the submitted list position.
     """
     # Arrange
     default_tier = TicketTier.objects.filter(event=event).exclude(pk=event_ticket_tier.pk).get()

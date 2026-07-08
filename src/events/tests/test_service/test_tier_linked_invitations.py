@@ -107,7 +107,7 @@ def private_event(org: Organization) -> Event:
         end=timezone.now() + timedelta(days=8),
         requires_ticket=True,
     )
-    # Delete auto-created "General Admission" tier to avoid noise in tests
+    # Delete the auto-created default tier to avoid noise in tests
     event.ticket_tiers.all().delete()
     return event
 
@@ -126,7 +126,7 @@ def public_event(org: Organization) -> Event:
         end=timezone.now() + timedelta(days=8),
         requires_ticket=True,
     )
-    # Delete auto-created "General Admission" tier to avoid noise in tests
+    # Delete the auto-created default tier to avoid noise in tests
     event.ticket_tiers.all().delete()
     return event
 

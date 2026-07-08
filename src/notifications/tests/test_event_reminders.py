@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from accounts.models import RevelUser
 from conftest import RevelUserFactory
-from events.models import Event, EventRSVP, Organization, Ticket, TicketTier
+from events.models import DEFAULT_TICKET_TIER_NAME, Event, EventRSVP, Organization, Ticket, TicketTier
 from notifications.enums import NotificationType
 from notifications.models import Notification
 from notifications.service.reminder_service import EventReminderService
@@ -142,7 +142,7 @@ def rsvp_event(organization: Organization) -> Event:
     )
 
 
-def get_or_create_ticket_tier(event: Event, name: str = "General Admission") -> TicketTier:
+def get_or_create_ticket_tier(event: Event, name: str = DEFAULT_TICKET_TIER_NAME) -> TicketTier:
     """Helper to get or create ticket tiers (events auto-create default tiers)."""
     tier, _ = TicketTier.objects.get_or_create(
         event=event,

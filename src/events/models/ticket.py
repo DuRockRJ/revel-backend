@@ -22,7 +22,7 @@ if t.TYPE_CHECKING:
     from accounts.models import RevelUser
     from events.models.event import Event
 
-DEFAULT_TICKET_TIER_NAME = "General Admission"
+DEFAULT_TICKET_TIER_NAME = "Entrada Geral"
 
 
 class CancellationSource(models.TextChoices):

@@ -6,7 +6,7 @@ import pytest
 from django.utils import timezone
 
 from accounts.models import RevelUser
-from events.models import Event, EventSeries, Organization, RecurrenceRule, TicketTier
+from events.models import DEFAULT_TICKET_TIER_NAME, Event, EventSeries, Organization, RecurrenceRule, TicketTier
 from questionnaires.models import (
     MultipleChoiceOption,
     MultipleChoiceQuestion,
@@ -146,11 +146,11 @@ def template_event(
 def template_event_with_tier(template_event: Event) -> Event:
     """Create a template event that has a ticket tier.
 
-    The template_event has requires_ticket=True, so a default "General Admission"
-    tier is auto-created by the signal. We update it with the desired price/quantity
+    The template_event has requires_ticket=True, so a default tier (DEFAULT_TICKET_TIER_NAME)
+    is auto-created by the signal. We update it with the desired price/quantity
     instead of creating a duplicate.
     """
-    tier = TicketTier.objects.get(event=template_event, name="General Admission")
+    tier = TicketTier.objects.get(event=template_event, name=DEFAULT_TICKET_TIER_NAME)
     tier.price = 15.00
     tier.total_quantity = 50
     tier.save(update_fields=["price", "total_quantity"])

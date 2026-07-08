@@ -78,7 +78,7 @@ def _create_summer_festival_tickets(state: BootstrapState, now: "datetime.dateti
         event=state.events["summer_festival"], name="Early Bird General Admission"
     )
     festival_general = events_models.TicketTier.objects.get(
-        event=state.events["summer_festival"], name="General Admission"
+        event=state.events["summer_festival"], name=events_models.DEFAULT_TICKET_TIER_NAME
     )
     festival_vip = events_models.TicketTier.objects.get(event=state.events["summer_festival"], name="VIP Experience")
 
