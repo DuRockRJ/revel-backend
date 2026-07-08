@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from accounts.models import RevelUser
 from events.models import (
+    Band,
     Event,
     EventInvitation,
     EventSeries,
@@ -179,3 +180,31 @@ def test_list_events_search(
     response = client.get(url, {"search": "nonexistent"})
     assert response.status_code == 200
     assert len(response.json()["results"]) == 0
+
+
+def test_list_events_search_no_duplicates_for_multiple_matching_bands(
+    client: Client, organization: Organization, next_week: datetime
+) -> None:
+    """An event matching the search term via more than one band must appear once, not once per match."""
+    rock_evt = Event.objects.create(
+        name="Rock Night",
+        slug="rock-night",
+        organization=organization,
+        visibility="public",
+        event_type=Event.EventType.PUBLIC,
+        status="open",
+        start=next_week,
+        end=next_week + timedelta(days=1),
+    )
+    rock_evt.bands.add(
+        Band.objects.create(name="Rocket Surgery"),
+        Band.objects.create(name="Rock Solid"),
+    )
+    url = reverse("api:list_events")
+
+    response = client.get(url, {"search": "Rock"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert len(data["results"]) == 1
+    assert data["results"][0]["name"] == rock_evt.name

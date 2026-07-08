@@ -71,7 +71,10 @@ class EventPublicDiscoveryController(EventPublicBaseController):
         event_ids = list(filtered_qs.values_list("id", flat=True).distinct())
 
         # Build simple queryset with IN clause - pagination COUNT is now fast
-        qs = models.Event.objects.full().filter(id__in=event_ids).with_user_bookmark(self.maybe_user())
+        # .distinct() guards against the @searching decorator re-joining M2M fields
+        # (tags, bands) after this returns, which would otherwise duplicate rows
+        # for events matching more than one tag/band.
+        qs = models.Event.objects.full().filter(id__in=event_ids).with_user_bookmark(self.maybe_user()).distinct()
 
         if order_by == "distance":
             return event_service.order_by_distance(self.user_location(), qs)
