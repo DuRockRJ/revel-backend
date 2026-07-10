@@ -208,3 +208,30 @@ def test_list_events_search_no_duplicates_for_multiple_matching_bands(
     assert data["count"] == 1
     assert len(data["results"]) == 1
     assert data["results"][0]["name"] == rock_evt.name
+
+
+def test_list_events_search_no_duplicates_with_tags(
+    client: Client, organization: Organization, next_week: datetime
+) -> None:
+    """A tagged event must appear once when searched, not once per tag (regression for #664)."""
+    event = Event.objects.create(
+        name="Summer Sunset Music Festival",
+        slug="sunset",
+        organization=organization,
+        visibility="public",
+        event_type=Event.EventType.PUBLIC,
+        description="Open-air music.",
+        status="open",
+        start=next_week,
+        end=next_week + timedelta(days=1),
+    )
+    event.add_tags("music", "festival", "summer")
+
+    url = reverse("api:list_events")
+    response = client.get(url, {"search": "Sunset"})
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    ids = [r["id"] for r in results]
+    assert ids == [str(event.id)]
+    assert len(ids) == len(set(ids))
