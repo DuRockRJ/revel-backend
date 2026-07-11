@@ -99,7 +99,7 @@ def google_login(id_token: str) -> TokenObtainPairOutputSchema:
         raise HttpError(403, str(BAN_ERROR_MESSAGE))
 
     # Extract language from Google locale (e.g., "en-US" -> "en", "de-DE" -> "de")
-    language = settings.LANGUAGE_CODE  # Default
+    language = "pt"  # DuRock RJ default; see RevelUser.language
     if id_info.locale:
         locale_lang = id_info.locale.split("-")[0]
         # Check if it's a supported language

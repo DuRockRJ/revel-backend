@@ -12,15 +12,22 @@ from accounts.models import RevelUser
 from accounts.schema import RegisterUserSchema
 from accounts.service.account import register_user, token_to_payload
 from common.authentication import I18nJWTAuth, OptionalAuth
+from conftest import RevelUserFactory
 
 pytestmark = pytest.mark.django_db
 
 
 def test_user_language_field_choices(user: RevelUser) -> None:
     """Test that user language field has correct language choices."""
-    # Language choices should be: en, de, it, fr
-    valid_languages = ["en", "de", "it", "fr"]
+    # Language choices should be: en, de, it, fr, pt
+    valid_languages = ["en", "de", "it", "fr", "pt"]
     assert user.language in valid_languages
+
+
+def test_user_language_defaults_to_portuguese(revel_user_factory: RevelUserFactory) -> None:
+    """Test that a new user defaults to 'pt' (DuRock RJ is Portuguese-only)."""
+    user = revel_user_factory(username="pt-default@example.com", email="pt-default@example.com")
+    assert user.language == "pt"
 
 
 @patch("accounts.tasks.send_account_email.delay")

@@ -67,7 +67,10 @@ class RevelUser(ExifStripMixin, StripeConnectMixin, AbstractUser):
     language = models.CharField(
         max_length=7,
         choices=settings.LANGUAGES,
-        default=settings.LANGUAGE_CODE,
+        # DuRock RJ is Portuguese-only; new users should default to the language the
+        # product actually ships in, not Django's global LANGUAGE_CODE ("en", inherited
+        # from upstream Revel).
+        default="pt",
         db_index=True,
         help_text="User's preferred language",
     )
