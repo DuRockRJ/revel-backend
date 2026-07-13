@@ -31,6 +31,7 @@ from .organization import (
     OrganizationStaff,
     OrganizationToken,
     OrgTractionRow,
+    PermissionKey,
     PermissionMap,
     PermissionsSchema,
 )
@@ -88,6 +89,7 @@ __all__ = [
     "OrganizationStaff",
     "OrganizationToken",
     "OrgTractionRow",
+    "PermissionKey",
     "PermissionMap",
     "PermissionsSchema",
     # Event Series
