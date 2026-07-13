@@ -48,22 +48,6 @@ def create_ticket_tiers(state: BootstrapState) -> None:
 
     now = timezone.now()
 
-    # Delete auto-created default tiers for events that will have custom tiers
-    # (except summer_festival which uses the default tier, DEFAULT_TICKET_TIER_NAME)
-    events_with_custom_tiers = [
-        state.events["wine_tasting"],
-        state.events["tech_conference"],
-        state.events["wellness_retreat"],
-        state.events["past_event"],
-        state.events["sold_out_workshop"],
-        state.events["draft_event"],
-        state.events["seated_concert"],
-    ]
-    events_models.TicketTier.objects.filter(
-        event__in=events_with_custom_tiers,
-        name=events_models.DEFAULT_TICKET_TIER_NAME,
-    ).delete()
-
     _create_summer_festival_tiers(state, now)
     _create_wine_tasting_tier(state, now)
     _create_tech_conference_tiers(state, now)
@@ -95,9 +79,9 @@ def _create_summer_festival_tiers(state: BootstrapState, now: "datetime.datetime
         description="Early bird pricing - save $20!",
     )
 
-    events_models.TicketTier.objects.filter(
-        name=events_models.DEFAULT_TICKET_TIER_NAME, event=state.events["summer_festival"]
-    ).update(
+    events_models.TicketTier.objects.create(
+        event=state.events["summer_festival"],
+        name=events_models.DEFAULT_TICKET_TIER_NAME,
         visibility=events_models.TicketTier.Visibility.PUBLIC,
         payment_method=events_models.TicketTier.PaymentMethod.ONLINE,
         purchasable_by=events_models.TicketTier.PurchasableBy.PUBLIC,
