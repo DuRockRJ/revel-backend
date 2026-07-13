@@ -75,8 +75,7 @@ def dash_setup(dash_user: RevelUser, django_user_model: t.Type[RevelUser]) -> di
     evt_ticket = models.Event.objects.create(
         name="Ticketed Event", organization=org_public_ticket, status="open", start=timezone.now()
     )
-    tier = evt_ticket.ticket_tiers.first()
-    assert tier is not None
+    tier = models.TicketTier.objects.create(event=evt_ticket, name="General")
     models.Ticket.objects.create(guest_name="Test Guest", event=evt_ticket, user=dash_user, tier=tier)
     evt_invite = models.Event.objects.create(
         name="Invited Event", organization=org_public_ticket, status="open", start=timezone.now()
@@ -269,8 +268,7 @@ def test_get_user_invitations_exclude_accepted_hides_ticket_holders(
     invite_evt.end = timezone.now() + timedelta(days=1)
     invite_evt.save(update_fields=["end"])
 
-    tier = invite_evt.ticket_tiers.first()
-    assert tier is not None
+    tier = models.TicketTier.objects.create(event=invite_evt, name="General")
     models.Ticket.objects.create(
         guest_name="Self",
         event=invite_evt,

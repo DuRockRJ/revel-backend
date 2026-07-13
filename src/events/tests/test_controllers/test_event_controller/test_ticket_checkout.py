@@ -67,9 +67,7 @@ def test_ticket_checkout_for_full_event_fails(
     public_event.save()
 
     # First user takes the spot
-    tier = public_event.ticket_tiers.first()
-    assert tier is not None
-    Ticket.objects.create(guest_name="Test Guest", user=public_user, event=public_event, tier=tier)
+    Ticket.objects.create(guest_name="Test Guest", user=public_user, event=public_event, tier=free_tier)
 
     url = reverse("api:ticket_checkout", kwargs={"event_id": public_event.pk, "tier_id": free_tier.pk})
     payload = {"tickets": [{"guest_name": "Test Guest"}]}

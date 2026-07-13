@@ -178,8 +178,7 @@ class TestCreatePotluckItemPermissions:
         self, nonmember_client: Client, event: Event, nonmember_user: RevelUser
     ) -> None:
         """Test that an attendee with a ticket can create a potluck item."""
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=event, name="General")
         models.Ticket.objects.create(guest_name="Test Guest", event=event, user=nonmember_user, tier=tier)
         url = reverse("api:create_potluck_item", kwargs={"event_id": event.id})
         event.potluck_open = True

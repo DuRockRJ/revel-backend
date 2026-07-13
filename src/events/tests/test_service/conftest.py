@@ -144,16 +144,8 @@ def template_event(
 
 @pytest.fixture
 def template_event_with_tier(template_event: Event) -> Event:
-    """Create a template event that has a ticket tier.
-
-    The template_event has requires_ticket=True, so a default tier (DEFAULT_TICKET_TIER_NAME)
-    is auto-created by the signal. We update it with the desired price/quantity
-    instead of creating a duplicate.
-    """
-    tier = TicketTier.objects.get(event=template_event, name=DEFAULT_TICKET_TIER_NAME)
-    tier.price = 15.00
-    tier.total_quantity = 50
-    tier.save(update_fields=["price", "total_quantity"])
+    """Create a template event that has a ticket tier."""
+    TicketTier.objects.create(event=template_event, name=DEFAULT_TICKET_TIER_NAME, price=15.00, total_quantity=50)
     return template_event
 
 

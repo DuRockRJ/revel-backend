@@ -9,7 +9,7 @@ from django.utils import timezone
 from ninja.errors import HttpError
 
 from accounts.models import RevelUser
-from events.models import Event, Payment, Ticket
+from events.models import Event, Payment, Ticket, TicketTier
 from events.service import stripe_service
 
 pytestmark = pytest.mark.django_db
@@ -25,8 +25,7 @@ class TestResumePendingCheckout:
         organization_owner_user: RevelUser,
     ) -> Payment:
         """Create a pending payment for testing."""
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = TicketTier.objects.create(event=event, name="General")
         tier.quantity_sold = 1
         tier.save()
         ticket = Ticket.objects.create(
@@ -113,8 +112,7 @@ class TestCancelPendingCheckout:
         organization_owner_user: RevelUser,
     ) -> Payment:
         """Create a pending payment for testing."""
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = TicketTier.objects.create(event=event, name="General")
         tier.quantity_sold = 1
         tier.save()
         ticket = Ticket.objects.create(
@@ -204,8 +202,7 @@ class TestCancelPendingCheckout:
         organization_owner_user: RevelUser,
     ) -> None:
         """Should delete all tickets with same stripe_session_id."""
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = TicketTier.objects.create(event=event, name="General")
         tier.quantity_sold = 3
         tier.save()
 

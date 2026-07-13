@@ -6,7 +6,6 @@ from datetime import datetime
 from django.db import transaction
 
 from events.models import Event, PotluckItem, TicketTier
-from events.suppression import suppress_default_tier_creation
 
 # Fields that are NOT copied from the template. These fall into three groups:
 # 1. Primary key / timestamps — auto-managed by Django.
@@ -163,9 +162,7 @@ def duplicate_event(
     copy_kwargs["is_template"] = False
     copy_kwargs["is_modified"] = False
 
-    # Suppress auto-creation of default ticket tier (we copy tiers from template)
-    with suppress_default_tier_creation():
-        new_event = Event.objects.create(**copy_kwargs)
+    new_event = Event.objects.create(**copy_kwargs)
 
     _duplicate_ticket_tiers(template_event, new_event, shift_date)
     _duplicate_potluck_items(template_event, new_event)

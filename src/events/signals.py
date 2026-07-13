@@ -10,7 +10,6 @@ from django.dispatch import receiver
 from accounts.models import RevelUser
 from common.models import SiteSettings
 from events.models import (
-    DEFAULT_TICKET_TIER_NAME,
     Blacklist,
     Event,
     EventInvitation,
@@ -24,7 +23,6 @@ from events.models import (
     PendingEventInvitation,
     ReservedSlugToken,
     Ticket,
-    TicketTier,
 )
 from events.models.organization import MembershipTier
 from events.service.blacklist_service import apply_blacklist_consequences, link_blacklist_entries_for_user
@@ -44,19 +42,6 @@ from notifications.signals import notification_requested
 __all__ = ["unclaim_user_potluck_items"]
 
 logger = structlog.get_logger(__name__)
-
-
-@receiver(post_save, sender=Event)
-def handle_event_save(sender: type[Event], instance: Event, created: bool, **kwargs: t.Any) -> None:
-    """Handle event creation and updates."""
-    from events.suppression import is_default_tier_creation_suppressed
-
-    if is_default_tier_creation_suppressed():
-        return
-
-    # Create default ticket tier if needed
-    if instance.requires_ticket and not TicketTier.objects.filter(event=instance).exists():
-        TicketTier.objects.create(event=instance, name=DEFAULT_TICKET_TIER_NAME)
 
 
 @receiver(post_save, sender=Organization)

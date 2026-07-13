@@ -45,8 +45,7 @@ class TestStripeEventHandler:
     @pytest.fixture
     def paid_ticket_tier(self, event: Event) -> TicketTier:
         """A paid ticket tier for testing."""
-        gat = event.ticket_tiers.first()
-        assert gat is not None
+        gat = TicketTier.objects.create(event=event, name="General")
         gat.price = Decimal("25.00")
         gat.save()
         return gat

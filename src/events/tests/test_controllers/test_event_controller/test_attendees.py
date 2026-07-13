@@ -10,6 +10,7 @@ from events.models import (
     Event,
     OrganizationMember,
     Ticket,
+    TicketTier,
 )
 from events.tasks import build_attendee_visibility_flags
 
@@ -44,8 +45,7 @@ def test_get_event_attendees(
     attendee_members.general_preferences.save()
 
     # 2. Make them attendees of the public event
-    tier = public_event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=public_event, name="General")
     Ticket.objects.create(guest_name="Test Guest", event=public_event, user=nonmember_user, tier=tier)
     Ticket.objects.create(guest_name="Test Guest", event=public_event, user=attendee_always, tier=tier)
     Ticket.objects.create(guest_name="Test Guest", event=public_event, user=attendee_never, tier=tier)

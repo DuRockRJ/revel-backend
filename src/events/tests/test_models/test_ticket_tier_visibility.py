@@ -3,7 +3,6 @@ from django.contrib.auth.models import AnonymousUser
 
 from accounts.models import RevelUser
 from events.models import (
-    DEFAULT_TICKET_TIER_NAME,
     Event,
     EventInvitation,
     OrganizationMember,
@@ -77,14 +76,8 @@ class TestTicketTierForUserVisibility:
         user = AnonymousUser()
         visible_tiers = TicketTier.objects.for_user(user)
 
-        # The public_event fixture has requires_ticket=True, so the signal creates
-        # a default tier (DEFAULT_TICKET_TIER_NAME). We also created `public_tier_on_public_event`.
-        # Both are public and on a public event, so both should be visible.
-        default_public_tier = TicketTier.objects.get(event=public_event, name=DEFAULT_TICKET_TIER_NAME)
-
-        assert visible_tiers.count() == 2
+        assert visible_tiers.count() == 1
         assert public_tier_on_public_event in visible_tiers
-        assert default_public_tier in visible_tiers
         assert member_tier_on_members_event not in visible_tiers
         assert private_tier_on_private_event not in visible_tiers
 
@@ -98,11 +91,9 @@ class TestTicketTierForUserVisibility:
     ) -> None:
         """A public (authenticated but non-member/non-invited) user sees the same as anonymous."""
         visible_tiers = TicketTier.objects.for_user(public_user)
-        default_public_tier = TicketTier.objects.get(event=public_event, name=DEFAULT_TICKET_TIER_NAME)
 
-        assert visible_tiers.count() == 2
+        assert visible_tiers.count() == 1
         assert public_tier_on_public_event in visible_tiers
-        assert default_public_tier in visible_tiers
         assert member_tier_on_members_event not in visible_tiers
         assert private_tier_on_private_event not in visible_tiers
 
@@ -119,18 +110,11 @@ class TestTicketTierForUserVisibility:
         """A user invited to a private event can see that event's public and private tiers."""
         visible_tiers = TicketTier.objects.for_user(public_user)
 
-        default_public_tier = TicketTier.objects.get(
-            event=public_tier_on_public_event.event, name=DEFAULT_TICKET_TIER_NAME
-        )
-        default_private_tier = TicketTier.objects.get(event=private_event, name=DEFAULT_TICKET_TIER_NAME)
-
-        # Sees public event's public tiers (2) + private event's tiers (3: default, private, public-on-private)
-        assert visible_tiers.count() == 5
+        # Sees public event's public tier (1) + private event's tiers (2: private, public-on-private)
+        assert visible_tiers.count() == 3
         assert public_tier_on_public_event in visible_tiers
-        assert default_public_tier in visible_tiers
         assert private_tier_on_private_event in visible_tiers
         assert public_tier_on_private_event in visible_tiers
-        assert default_private_tier in visible_tiers
         assert member_tier_on_members_event not in visible_tiers
 
     def test_visibility_for_member_user(
@@ -148,21 +132,14 @@ class TestTicketTierForUserVisibility:
 
         # A member can see the public_event and the members_only_event.
         # They should see all tiers on those events that are either PUBLIC or MEMBERS_ONLY.
-        default_public_tier = TicketTier.objects.get(event=public_event, name=DEFAULT_TICKET_TIER_NAME)
-        default_member_tier = TicketTier.objects.get(event=members_only_event, name=DEFAULT_TICKET_TIER_NAME)
-
         # EXPECTED:
         # 1. public_tier_on_public_event (Public tier on Public event)
-        # 2. default_public_tier (Public tier on Public event)
-        # 3. member_tier_on_members_event (Member tier on Member event)
-        # 4. default_member_tier (Public tier on Member event) -> This was the bug
-        assert visible_tiers.count() == 4
+        # 2. member_tier_on_members_event (Member tier on Member event)
+        assert visible_tiers.count() == 2
 
         # Assertions
         assert public_tier_on_public_event in visible_tiers
-        assert default_public_tier in visible_tiers
         assert member_tier_on_members_event in visible_tiers
-        assert default_member_tier in visible_tiers
 
         # They should NOT see the private tier because they are not invited to the private event
         assert private_tier_on_private_event not in visible_tiers
@@ -180,8 +157,8 @@ class TestTicketTierForUserVisibility:
         visible_tiers = TicketTier.objects.for_user(organization_staff_user)
 
         # Staff can see all tiers from all events in their organization
-        # public (2), members_only (2), private (3) = 7 total
-        assert visible_tiers.count() == 7
+        # public (1), members_only (1), private (2) = 4 total
+        assert visible_tiers.count() == 4
         assert public_tier_on_public_event in visible_tiers
         assert member_tier_on_members_event in visible_tiers
         assert private_tier_on_private_event in visible_tiers
@@ -198,8 +175,8 @@ class TestTicketTierForUserVisibility:
         visible_tiers = TicketTier.objects.for_user(organization_owner_user)
 
         # Owner can see all tiers from all events in their organization
-        # public (2), members_only (2), private (2) = 6 total
-        assert visible_tiers.count() == 6
+        # public (1), members_only (1), private (1) = 3 total
+        assert visible_tiers.count() == 3
         assert public_tier_on_public_event in visible_tiers
         assert member_tier_on_members_event in visible_tiers
         assert private_tier_on_private_event in visible_tiers
@@ -215,7 +192,7 @@ class TestTicketTierForUserVisibility:
         visible_tiers = TicketTier.objects.for_user(superuser)
 
         # Superuser sees everything that exists in the test DB
-        assert visible_tiers.count() == 6
+        assert visible_tiers.count() == 3
         assert public_tier_on_public_event in visible_tiers
         assert member_tier_on_members_event in visible_tiers
         assert private_tier_on_private_event in visible_tiers

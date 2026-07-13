@@ -118,8 +118,7 @@ def dashboard_setup(dashboard_user: RevelUser) -> dict[str, t.Any]:
     evt_ticket = Event.objects.create(
         name="Ticketed Event", organization=org_public_ticket, status="open", start=timezone.now()
     )
-    tier = evt_ticket.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=evt_ticket, name="General")
     Ticket.objects.create(guest_name="Test Guest", event=evt_ticket, user=dashboard_user, tier=tier)
     evt_invite = Event.objects.create(
         name="Invited Event", organization=org_public_ticket, status="open", start=timezone.now()

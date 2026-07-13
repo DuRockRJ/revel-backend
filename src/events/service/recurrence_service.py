@@ -66,7 +66,6 @@ def materialize_occurrence(series: EventSeries, dt: datetime, index: int) -> Eve
 
     Calls duplicate_event() for deep cloning with series-specific overrides
     (occurrence_index and status) applied atomically in the initial create.
-    The duplicate_event() call already uses suppress_default_tier_creation() internally.
     """
     template = series.template_event
     if not template:

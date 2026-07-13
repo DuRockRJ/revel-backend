@@ -16,6 +16,7 @@ from events.models import (
     EventRSVP,
     Organization,
     Ticket,
+    TicketTier,
 )
 
 pytestmark = pytest.mark.django_db
@@ -334,7 +335,7 @@ class TestDashboardInvitationsExcludeAccepted:
             start=now + timedelta(days=1),
             end=now + timedelta(days=2),
         )
-        tier_active = evt_active.ticket_tiers.first()
+        tier_active = TicketTier.objects.create(event=evt_active, name="General")
         assert tier_active is not None
         Ticket.objects.create(
             event=evt_active,
@@ -353,7 +354,7 @@ class TestDashboardInvitationsExcludeAccepted:
             start=now + timedelta(days=3),
             end=now + timedelta(days=4),
         )
-        tier_pending = evt_pending.ticket_tiers.first()
+        tier_pending = TicketTier.objects.create(event=evt_pending, name="General")
         assert tier_pending is not None
         Ticket.objects.create(
             event=evt_pending,
@@ -372,7 +373,7 @@ class TestDashboardInvitationsExcludeAccepted:
             start=now + timedelta(days=5),
             end=now + timedelta(days=6),
         )
-        tier_checked = evt_checked.ticket_tiers.first()
+        tier_checked = TicketTier.objects.create(event=evt_checked, name="General")
         assert tier_checked is not None
         Ticket.objects.create(
             event=evt_checked,
@@ -402,7 +403,7 @@ class TestDashboardInvitationsExcludeAccepted:
             start=now + timedelta(days=9),
             end=now + timedelta(days=10),
         )
-        tier_cancelled = evt_cancelled.ticket_tiers.first()
+        tier_cancelled = TicketTier.objects.create(event=evt_cancelled, name="General")
         assert tier_cancelled is not None
         Ticket.objects.create(
             event=evt_cancelled,
@@ -486,7 +487,7 @@ def test_dashboard_tickets(
         start=timezone.now() + timedelta(days=5),
         end=timezone.now() + timedelta(days=6),
     )
-    tier = new_event.ticket_tiers.first()
+    tier = TicketTier.objects.create(event=new_event, name="General")
     assert tier is not None
     ticket2 = Ticket.objects.create(
         guest_name="Test Guest", event=new_event, user=dashboard_user, tier=tier, status=Ticket.TicketStatus.PENDING
@@ -531,7 +532,7 @@ def test_dashboard_tickets_include_past(
         start=timezone.now() - timedelta(days=3),
         end=timezone.now() - timedelta(days=2),
     )
-    tier_past = past_event.ticket_tiers.first()
+    tier_past = TicketTier.objects.create(event=past_event, name="General")
     assert tier_past is not None
     Ticket.objects.create(guest_name="Test Guest", event=past_event, user=dashboard_user, tier=tier_past)
 
@@ -544,7 +545,7 @@ def test_dashboard_tickets_include_past(
         start=timezone.now() + timedelta(days=3),
         end=timezone.now() + timedelta(days=4),
     )
-    tier_upcoming = upcoming_event.ticket_tiers.first()
+    tier_upcoming = TicketTier.objects.create(event=upcoming_event, name="General")
     assert tier_upcoming is not None
     upcoming_ticket = Ticket.objects.create(
         guest_name="Test Guest", event=upcoming_event, user=dashboard_user, tier=tier_upcoming

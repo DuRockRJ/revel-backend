@@ -6,7 +6,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from accounts.models import RevelUser
-from events.models import Event, OrganizationStaff
+from events.models import Event, OrganizationStaff, TicketTier
 
 pytestmark = pytest.mark.django_db
 
@@ -19,8 +19,7 @@ def test_create_direct_invitations_for_existing_users(
 ) -> None:
     """Test creating direct invitations for existing users."""
     url = reverse("api:create_direct_invitations", kwargs={"event_id": event.pk})
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     payload = {
         "emails": [public_user.email, member_user.email],
         "waives_questionnaire": True,
@@ -46,8 +45,7 @@ def test_create_direct_invitations_for_existing_users(
 def test_create_direct_invitations_for_non_existing_users(organization_owner_client: Client, event: Event) -> None:
     """Test creating direct invitations for non-existing users."""
     url = reverse("api:create_direct_invitations", kwargs={"event_id": event.pk})
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     payload = {
         "emails": ["nonexistent1@example.com", "nonexistent2@example.com"],
         "waives_purchase": True,
@@ -78,8 +76,7 @@ def test_create_direct_invitations_mixed_users(
 ) -> None:
     """Test creating direct invitations for both existing and non-existing users."""
     url = reverse("api:create_direct_invitations", kwargs={"event_id": event.pk})
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     payload = {
         "emails": [public_user.email, "new@example.com"],
         "custom_message": "Welcome to our event!",
@@ -100,8 +97,7 @@ def test_create_direct_invitations_requires_permission(
 ) -> None:
     """Test that creating direct invitations requires the invite_to_event permission."""
     # Remove the invite_to_event permission
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     perms = staff_member.permissions
     perms["default"]["invite_to_event"] = False
     staff_member.permissions = perms

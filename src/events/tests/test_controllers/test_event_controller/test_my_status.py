@@ -20,8 +20,7 @@ def test_get_my_event_status_with_ticket(
     nonmember_client: Client, nonmember_user: RevelUser, public_event: Event
 ) -> None:
     """Test status returns a ticket if one exists for the user."""
-    tier = public_event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=public_event, name="General")
     ticket = Ticket.objects.create(guest_name="Test Guest", event=public_event, user=nonmember_user, tier=tier)
     url = reverse("api:get_my_event_status", kwargs={"event_id": public_event.pk})
     response = nonmember_client.get(url)
@@ -58,6 +57,7 @@ def test_get_my_event_status_with_rsvp(
 
 def test_get_my_event_status_is_eligible(nonmember_client: Client, public_event: Event) -> None:
     """Test status returns eligibility data if user is eligible but has no ticket/rsvp."""
+    TicketTier.objects.create(event=public_event, name="General")
     url = reverse("api:get_my_event_status", kwargs={"event_id": public_event.pk})
     response = nonmember_client.get(url)
     assert response.status_code == 200
@@ -68,6 +68,7 @@ def test_get_my_event_status_is_eligible(nonmember_client: Client, public_event:
 
 def test_get_my_event_status_is_ineligible(nonmember_client: Client, public_event: Event) -> None:
     """Test status returns eligibility data if user is ineligible."""
+    TicketTier.objects.create(event=public_event, name="General")
     url = reverse("api:get_my_event_status", kwargs={"event_id": public_event.pk})
     response = nonmember_client.get(url)
     assert response.status_code == 200  # The endpoint itself succeeds, it returns the status
@@ -93,9 +94,7 @@ def test_get_my_event_status_multi_tier(
     This tests the core multi-tier functionality where a user can see different
     tiers with different remaining counts.
     """
-    # Get the auto-created default tier
-    default_tier = public_event.ticket_tiers.first()
-    assert default_tier is not None
+    default_tier = TicketTier.objects.create(event=public_event, name="General")
     default_tier.max_tickets_per_user = 2  # Allow 2 tickets per user
     default_tier.save()
 
@@ -154,9 +153,7 @@ def test_get_my_event_status_multi_tier_with_sold_out(
     public_event: Event,
 ) -> None:
     """Test status returns sold_out=True for tiers that have no inventory."""
-    # Get the auto-created default tier and make it sold out
-    sold_out_tier = public_event.ticket_tiers.first()
-    assert sold_out_tier is not None
+    sold_out_tier = TicketTier.objects.create(event=public_event, name="General")
     sold_out_tier.total_quantity = 5
     sold_out_tier.quantity_sold = 5  # Completely sold out
     sold_out_tier.max_tickets_per_user = 2
@@ -216,9 +213,7 @@ def test_get_my_event_status_all_tiers_sold_out(
     remaining quota but not sold_out status. A user could have personal quota
     remaining but still cannot purchase if all tiers are sold out.
     """
-    # Get the auto-created default tier and make it sold out
-    sold_out_tier = public_event.ticket_tiers.first()
-    assert sold_out_tier is not None
+    sold_out_tier = TicketTier.objects.create(event=public_event, name="General")
     sold_out_tier.total_quantity = 5
     sold_out_tier.quantity_sold = 5  # Completely sold out
     sold_out_tier.max_tickets_per_user = 3  # User has quota remaining
@@ -259,9 +254,7 @@ def test_get_my_event_status_multi_tier_with_unlimited(
     public_event.max_attendees = 0  # 0 means unlimited capacity
     public_event.save()
 
-    # Get the auto-created default tier
-    limited_tier = public_event.ticket_tiers.first()
-    assert limited_tier is not None
+    limited_tier = TicketTier.objects.create(event=public_event, name="General")
     limited_tier.max_tickets_per_user = 2  # Tier-level override
     limited_tier.save()
 
@@ -312,9 +305,7 @@ def test_get_my_event_status_multi_tier_members_only_visibility(
     public_event: Event,
 ) -> None:
     """Test that members can see MEMBERS_ONLY visibility tiers."""
-    # Get the auto-created default tier (public)
-    public_tier = public_event.ticket_tiers.first()
-    assert public_tier is not None
+    public_tier = TicketTier.objects.create(event=public_event, name="General")
 
     # Create a members-only tier
     members_tier = TicketTier.objects.create(
@@ -355,9 +346,7 @@ def test_get_my_event_status_nonmember_cannot_see_members_only_tier(
     public_event: Event,
 ) -> None:
     """Test that non-members cannot see MEMBERS_ONLY visibility tiers."""
-    # Get the auto-created default tier (public)
-    public_tier = public_event.ticket_tiers.first()
-    assert public_tier is not None
+    public_tier = TicketTier.objects.create(event=public_event, name="General")
 
     # Create a members-only tier
     TicketTier.objects.create(

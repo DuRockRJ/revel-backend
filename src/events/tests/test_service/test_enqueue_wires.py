@@ -71,8 +71,7 @@ def test_stripe_refund_webhook_enqueues_waitlist(
 
     from events.service.stripe_webhooks import StripeEventHandler
 
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     tier.price = Decimal("25.00")
     tier.quantity_sold = 5
     tier.save()
@@ -132,8 +131,7 @@ def test_stripe_payment_intent_canceled_enqueues_waitlist(
 
     from events.service.stripe_webhooks import StripeEventHandler
 
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     tier.price = Decimal("25.00")
     tier.quantity_sold = 5
     tier.save()
@@ -186,8 +184,7 @@ def test_stripe_payment_intent_canceled_enqueues_once_per_event(
 
     from events.service.stripe_webhooks import StripeEventHandler
 
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     tier.price = Decimal("25.00")
     tier.quantity_sold = 5
     tier.save()
@@ -241,8 +238,7 @@ def test_stripe_refund_webhook_enqueues_once_per_event(
 
     from events.service.stripe_webhooks import StripeEventHandler
 
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     tier.price = Decimal("25.00")
     tier.quantity_sold = 5
     tier.save()
@@ -378,8 +374,7 @@ def test_cancel_pending_checkout_enqueues_waitlist(
     """``stripe_service.cancel_pending_checkout`` enqueues processing for the freed event."""
     from events.service.stripe_service import cancel_pending_checkout
 
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     tier.price = Decimal("25.00")
     tier.quantity_sold = 1
     tier.save()

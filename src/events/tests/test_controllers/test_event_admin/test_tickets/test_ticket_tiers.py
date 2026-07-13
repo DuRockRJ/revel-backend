@@ -23,7 +23,7 @@ def test_list_ticket_tiers_by_owner(
 
     assert response.status_code == 200
     data = response.json()
-    assert data["count"] == 2  # there's a default
+    assert data["count"] == 1
     tier_ids = {r["id"] for r in data["results"]}
     assert str(event_ticket_tier.pk) in tier_ids
 
@@ -37,7 +37,7 @@ def test_list_ticket_tiers_by_staff_with_permission(
 
     assert response.status_code == 200
     data = response.json()
-    assert data["count"] == 2  # there's default
+    assert data["count"] == 1
     tier_ids = {r["id"] for r in data["results"]}
     assert str(event_ticket_tier.pk) in tier_ids
 
@@ -417,13 +417,13 @@ def test_ticket_tier_crud_maintains_event_relationship(
     list_url = reverse("api:list_ticket_tiers", kwargs={"event_id": event.pk})
     response = organization_owner_client.get(list_url)
     assert response.status_code == 200
-    assert response.json()["count"] == 2
+    assert response.json()["count"] == 1
 
     # List tiers for different event should be empty
     other_list_url = reverse("api:list_ticket_tiers", kwargs={"event_id": public_event.pk})
     response = organization_owner_client.get(other_list_url)
     assert response.status_code == 200
-    assert response.json()["count"] == 1
+    assert response.json()["count"] == 0
 
 
 # --- Tests for Ticket Tier Membership Restrictions ---
@@ -656,14 +656,12 @@ def test_reorder_ticket_tiers_by_owner(
 ) -> None:
     """Test that an event owner can reorder ticket tiers successfully.
 
-    The event has two tiers: a default tier (DEFAULT_TICKET_TIER_NAME) created by a
-    signal and the event_ticket_tier fixture. Reordering should update display_order
-    to match the submitted list position.
+    Reordering should update display_order to match the submitted list position.
     """
     # Arrange
-    default_tier = TicketTier.objects.filter(event=event).exclude(pk=event_ticket_tier.pk).get()
-    # Submit in reverse order: event_ticket_tier first, default tier second
-    desired_order = [str(event_ticket_tier.pk), str(default_tier.pk)]
+    second_tier = TicketTier.objects.create(event=event, name="Second Tier")
+    # Submit in reverse order: second_tier first, event_ticket_tier second
+    desired_order = [str(second_tier.pk), str(event_ticket_tier.pk)]
     url = reverse("api:reorder_ticket_tiers", kwargs={"event_id": event.pk})
 
     # Act
@@ -674,8 +672,8 @@ def test_reorder_ticket_tiers_by_owner(
     # Assert
     assert response.status_code == 204
     ordered_tiers = list(TicketTier.objects.filter(event=event).order_by("display_order"))
-    assert ordered_tiers[0].pk == event_ticket_tier.pk
-    assert ordered_tiers[1].pk == default_tier.pk
+    assert ordered_tiers[0].pk == second_tier.pk
+    assert ordered_tiers[1].pk == event_ticket_tier.pk
     assert ordered_tiers[0].display_order == 0
     assert ordered_tiers[1].display_order == 1
 
@@ -685,8 +683,8 @@ def test_reorder_ticket_tiers_by_staff_with_permission(
 ) -> None:
     """Test that staff with manage_tickets permission can reorder tiers."""
     # Arrange
-    default_tier = TicketTier.objects.filter(event=event).exclude(pk=event_ticket_tier.pk).get()
-    desired_order = [str(event_ticket_tier.pk), str(default_tier.pk)]
+    second_tier = TicketTier.objects.create(event=event, name="Second Tier")
+    desired_order = [str(second_tier.pk), str(event_ticket_tier.pk)]
     url = reverse("api:reorder_ticket_tiers", kwargs={"event_id": event.pk})
 
     # Act
@@ -697,8 +695,8 @@ def test_reorder_ticket_tiers_by_staff_with_permission(
     # Assert
     assert response.status_code == 204
     ordered_tiers = list(TicketTier.objects.filter(event=event).order_by("display_order"))
-    assert ordered_tiers[0].pk == event_ticket_tier.pk
-    assert ordered_tiers[1].pk == default_tier.pk
+    assert ordered_tiers[0].pk == second_tier.pk
+    assert ordered_tiers[1].pk == event_ticket_tier.pk
 
 
 def test_reorder_ticket_tiers_by_staff_without_permission(
@@ -711,8 +709,8 @@ def test_reorder_ticket_tiers_by_staff_without_permission(
     staff_member.permissions = perms
     staff_member.save()
 
-    default_tier = TicketTier.objects.filter(event=event).exclude(pk=event_ticket_tier.pk).get()
-    desired_order = [str(event_ticket_tier.pk), str(default_tier.pk)]
+    second_tier = TicketTier.objects.create(event=event, name="Second Tier")
+    desired_order = [str(second_tier.pk), str(event_ticket_tier.pk)]
     url = reverse("api:reorder_ticket_tiers", kwargs={"event_id": event.pk})
 
     # Act
@@ -732,7 +730,8 @@ def test_reorder_ticket_tiers_missing_tier_ids(
     The service validates that tier_ids must match ALL tiers for the event exactly.
     Providing only one of the two tiers should be rejected.
     """
-    # Arrange - only send one of the two tier IDs
+    # Arrange - a second tier so that submitting only one tier ID is a subset
+    TicketTier.objects.create(event=event, name="Second Tier")
     url = reverse("api:reorder_ticket_tiers", kwargs={"event_id": event.pk})
 
     # Act
@@ -753,9 +752,9 @@ def test_reorder_ticket_tiers_extra_foreign_tier_ids(
     the correct tiers should be rejected since the set won't match exactly.
     """
     # Arrange
-    default_tier = TicketTier.objects.filter(event=event).exclude(pk=event_ticket_tier.pk).get()
+    second_tier = TicketTier.objects.create(event=event, name="Second Tier")
     # Include both correct tiers plus the foreign vip_tier
-    desired_order = [str(event_ticket_tier.pk), str(default_tier.pk), str(vip_tier.pk)]
+    desired_order = [str(event_ticket_tier.pk), str(second_tier.pk), str(vip_tier.pk)]
     url = reverse("api:reorder_ticket_tiers", kwargs={"event_id": event.pk})
 
     # Act
@@ -780,8 +779,8 @@ def test_reorder_ticket_tiers_unauthorized(
     """Test that unauthorized users cannot reorder ticket tiers."""
     # Arrange
     client: Client = request.getfixturevalue(client_fixture)
-    default_tier = TicketTier.objects.filter(event=public_event).exclude(pk=vip_tier.pk).get()
-    desired_order = [str(vip_tier.pk), str(default_tier.pk)]
+    second_tier = TicketTier.objects.create(event=public_event, name="Second Tier")
+    desired_order = [str(vip_tier.pk), str(second_tier.pk)]
     url = reverse("api:reorder_ticket_tiers", kwargs={"event_id": public_event.pk})
 
     # Act

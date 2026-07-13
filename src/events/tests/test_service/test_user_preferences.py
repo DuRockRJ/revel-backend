@@ -142,8 +142,7 @@ class TestResolveVisibility:
         target.general_preferences.save()
 
         # Viewer is an attendee (via ticket)
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=event, name="General")
         models.Ticket.objects.create(guest_name="Test Guest", event=event, user=viewer, tier=tier)
         assert (
             resolve_visibility(
@@ -286,8 +285,7 @@ class TestVisibilityContext:
     ) -> None:
         """Test that VisibilityContext.for_event() correctly populates all relationship sets."""
         # Create various relationships
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=event, name="General")
 
         # Create invitation
         invited_user = RevelUser.objects.create_user(
@@ -340,8 +338,7 @@ class TestVisibilityContext:
 
     def test_is_viewer_invited_or_attending_with_invitation(self, event: models.Event, member_user: RevelUser) -> None:
         """Test is_viewer_invited_or_attending returns True for invited users."""
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=event, name="General")
         invitation = models.EventInvitation.objects.create(event=event, user=member_user)
         invitation.tiers.add(tier)
         context = VisibilityContext.for_event(
@@ -497,8 +494,7 @@ class TestResolveVisibilityFast:
         target.general_preferences.save()
 
         # Give viewer a ticket
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=event, name="General")
         models.Ticket.objects.create(event=event, user=viewer, tier=tier, guest_name="Viewer")
 
         context = VisibilityContext.for_event(
@@ -548,8 +544,7 @@ class TestResolveVisibilityFast:
         target.general_preferences.save()
 
         # Give viewer a ticket but no membership
-        tier = event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=event, name="General")
         models.Ticket.objects.create(event=event, user=viewer, tier=tier, guest_name="Viewer")
 
         context = VisibilityContext.for_event(

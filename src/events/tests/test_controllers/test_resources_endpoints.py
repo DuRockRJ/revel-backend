@@ -121,8 +121,7 @@ class TestPublicResourceEndpoints:
     ) -> None:
         """Test that a user with a ticket for an event can see a private resource linked to it."""
         # Give the user a ticket to the event
-        tier = private_event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=private_event, name="General")
         models.Ticket.objects.create(guest_name="Test Guest", user=nonmember_user, event=private_event, tier=tier)
         url = reverse("api:list_event_resources", kwargs={"event_id": private_event.id})
 
@@ -172,8 +171,7 @@ class TestPublicResourceEndpoints:
     ) -> None:
         """Test that a user with a ticket can see attendees-only resources."""
         # Give the user a ticket to the event
-        tier = private_event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=private_event, name="General")
         models.Ticket.objects.create(
             guest_name="Test Guest",
             user=nonmember_user,
@@ -197,8 +195,7 @@ class TestPublicResourceEndpoints:
     ) -> None:
         """Test that a user with a pending ticket can see attendees-only resources."""
         # Give the user a pending ticket
-        tier = private_event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=private_event, name="General")
         models.Ticket.objects.create(
             guest_name="Test Guest",
             user=nonmember_user,
@@ -328,8 +325,7 @@ class TestPublicResourceEndpoints:
     ) -> None:
         """Test that a user with a cancelled ticket cannot see attendees-only resources."""
         # Give the user a cancelled ticket
-        tier = private_event.ticket_tiers.first()
-        assert tier is not None
+        tier = models.TicketTier.objects.create(event=private_event, name="General")
         models.Ticket.objects.create(
             guest_name="Test Guest",
             user=nonmember_user,

@@ -48,8 +48,7 @@ def test_build_attendee_visibility_flags(
         viewer == attendee1 and target == attendee2
     )
 
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     Ticket.objects.create(
         guest_name="Test Guest", event=event, user=attendee1, tier=tier, status=Ticket.TicketStatus.ACTIVE
     )
@@ -88,8 +87,7 @@ def test_build_attendee_visibility_flags_integration(
     attendee1 = revel_user_factory()
     attendee2 = revel_user_factory()
 
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     Ticket.objects.create(
         guest_name="Test Guest", event=event, user=attendee1, tier=tier, status=Ticket.TicketStatus.ACTIVE
     )
@@ -138,8 +136,7 @@ def test_build_attendee_visibility_flags_replaces_existing(
     attendee2 = revel_user_factory()
 
     # Create tickets to make them attendees
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     Ticket.objects.create(
         guest_name="Test Guest", event=event, user=attendee1, tier=tier, status=Ticket.TicketStatus.ACTIVE
     )

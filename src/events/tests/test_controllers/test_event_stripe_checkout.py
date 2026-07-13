@@ -53,8 +53,7 @@ class TestEventStripeCheckout:
     @pytest.fixture
     def paid_ticket_tier(self, public_event: Event) -> TicketTier:
         """A paid ticket tier."""
-        gat = public_event.ticket_tiers.first()
-        assert gat is not None
+        gat = TicketTier.objects.create(event=public_event, name="General")
         gat.price = Decimal("25.00")
         gat.payment_method = TicketTier.PaymentMethod.ONLINE
         gat.save()
@@ -338,8 +337,7 @@ class TestStripeCheckoutRateLimit:
     @pytest.fixture
     def paid_ticket_tier(self, public_event: Event) -> TicketTier:
         """A paid ticket tier."""
-        gat = public_event.ticket_tiers.first()
-        assert gat is not None
+        gat = TicketTier.objects.create(event=public_event, name="General")
         gat.price = Decimal("25.00")
         gat.payment_method = TicketTier.PaymentMethod.ONLINE
         gat.save()
@@ -411,8 +409,7 @@ class TestResumeCheckoutEndpoint:
     @pytest.fixture
     def paid_ticket_tier(self, public_event: Event) -> TicketTier:
         """A paid ticket tier."""
-        gat = public_event.ticket_tiers.first()
-        assert gat is not None
+        gat = TicketTier.objects.create(event=public_event, name="General")
         gat.price = Decimal("25.00")
         gat.payment_method = TicketTier.PaymentMethod.ONLINE
         gat.quantity_sold = 1
@@ -546,8 +543,7 @@ class TestCancelCheckoutEndpoint:
     @pytest.fixture
     def paid_ticket_tier(self, public_event: Event) -> TicketTier:
         """A paid ticket tier."""
-        gat = public_event.ticket_tiers.first()
-        assert gat is not None
+        gat = TicketTier.objects.create(event=public_event, name="General")
         gat.price = Decimal("25.00")
         gat.payment_method = TicketTier.PaymentMethod.ONLINE
         gat.quantity_sold = 1

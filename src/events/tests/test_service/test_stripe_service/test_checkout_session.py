@@ -32,8 +32,7 @@ class TestCreateCheckoutSession:
     @pytest.fixture
     def paid_ticket_tier(self, event: Event) -> TicketTier:
         """A paid ticket tier."""
-        ga_tier = event.ticket_tiers.first()
-        assert ga_tier is not None
+        ga_tier = TicketTier.objects.create(event=event, name="General")
         ga_tier.price = Decimal("25.00")
         ga_tier.total_quantity = 10
         ga_tier.save()
