@@ -10,9 +10,10 @@ from ninja_extra import (
     route,
 )
 from ninja_extra.pagination import PageNumberPaginationExtra, PaginatedResponseSchema, paginate
-from ninja_extra.searching import Searching, searching
+from ninja_extra.searching import searching
 
 from common.authentication import I18nJWTAuth, OptionalAuth
+from common.controllers import DistinctSearching
 from common.schema import ResponseMessage
 from common.throttling import WriteThrottle
 from events import filters, models, schema
@@ -33,7 +34,7 @@ class EventPublicDiscoveryController(EventPublicBaseController):
     @route.get("/", url_name="list_events", response=PaginatedResponseSchema[schema.EventInListSchema])
     @paginate(PageNumberPaginationExtra, page_size=20)
     @searching(
-        Searching,
+        DistinctSearching,
         search_fields=[
             "name",
             "description",
@@ -71,10 +72,7 @@ class EventPublicDiscoveryController(EventPublicBaseController):
         event_ids = list(filtered_qs.values_list("id", flat=True).distinct())
 
         # Build simple queryset with IN clause - pagination COUNT is now fast
-        # .distinct() guards against the @searching decorator re-joining M2M fields
-        # (tags, bands) after this returns, which would otherwise duplicate rows
-        # for events matching more than one tag/band.
-        qs = models.Event.objects.full().filter(id__in=event_ids).with_user_bookmark(self.maybe_user()).distinct()
+        qs = models.Event.objects.full().filter(id__in=event_ids).with_user_bookmark(self.maybe_user())
 
         if order_by == "distance":
             return event_service.order_by_distance(self.user_location(), qs)
