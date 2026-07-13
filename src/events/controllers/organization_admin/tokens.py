@@ -101,7 +101,11 @@ class OrganizationAdminTokensController(OrganizationAdminBaseController):
         - Verify staff invitation tokens are properly restricted
         """
         organization = self.get_one(slug)
-        return params.filter(models.OrganizationToken.objects.filter(organization=organization)).distinct()
+        return params.filter(
+            models.OrganizationToken.objects.filter(organization=organization).select_related(
+                "organization", "membership_tier"
+            )
+        ).distinct()
 
     @route.post(
         "/tokens",

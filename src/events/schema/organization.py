@@ -26,6 +26,7 @@ from .mixins import (
     SocialMediaSchemaEditMixin,
     SocialMediaSchemaRetrieveMixin,
     TaggableSchemaMixin,
+    get_image_field_url,
 )
 
 
@@ -300,6 +301,14 @@ class StaffAddSchema(Schema):
 
 
 class OrganizationTokenSchema(ModelSchema):
+    # Additive, public-safe org details so the pre-claim token preview (unauthenticated)
+    # can render which organization the invitee is joining without a second lookup.
+    # ``organization`` stays a bare UUID to keep the org-admin token list contract unchanged.
+    organization_name: str
+    organization_slug: str
+    organization_logo_url: str | None = None
+    membership_tier_name: str | None = None
+
     class Meta:
         model = models.OrganizationToken
         fields = [
@@ -315,6 +324,26 @@ class OrganizationTokenSchema(ModelSchema):
             "membership_tier",
             "created_at",
         ]
+
+    @staticmethod
+    def resolve_organization_name(obj: models.OrganizationToken) -> str:
+        """Return the token's organization name."""
+        return obj.organization.name
+
+    @staticmethod
+    def resolve_organization_slug(obj: models.OrganizationToken) -> str:
+        """Return the token's organization slug."""
+        return obj.organization.slug
+
+    @staticmethod
+    def resolve_organization_logo_url(obj: models.OrganizationToken) -> str | None:
+        """Return the token's organization logo thumbnail URL, if any (public, unsigned)."""
+        return get_image_field_url(obj.organization, "logo_thumbnail")
+
+    @staticmethod
+    def resolve_membership_tier_name(obj: models.OrganizationToken) -> str | None:
+        """Return the granted membership tier's name, if the token targets a specific tier."""
+        return obj.membership_tier.name if obj.membership_tier else None
 
 
 class OrganizationTokenBaseSchema(Schema):
