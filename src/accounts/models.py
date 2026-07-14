@@ -396,6 +396,22 @@ class ImpersonationLog(models.Model):
         return self.redeemed_at is not None
 
 
+def _default_referral_share_percent() -> Decimal:
+    """Resolve at save time, not migration-generation time.
+
+    A bare ``default=settings.DEFAULT_REFERRAL_SHARE_PERCENT`` bakes whatever
+    value is configured in the environment where ``makemigrations`` happens
+    to run into the migration file as a literal, producing a spurious
+    pending migration on every other environment with a different value.
+    """
+    return settings.DEFAULT_REFERRAL_SHARE_PERCENT
+
+
+def _default_currency() -> str:
+    """Resolve at save time, not migration-generation time (same reasoning as above)."""
+    return settings.DEFAULT_CURRENCY
+
+
 class ReferralCode(TimeStampedModel):
     """Tracks a unique referral code assigned 1:1 to a user.
 
@@ -438,7 +454,7 @@ class Referral(TimeStampedModel):
     revenue_share_percent = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=settings.DEFAULT_REFERRAL_SHARE_PERCENT,
+        default=_default_referral_share_percent,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Snapshotted from settings.DEFAULT_REFERRAL_SHARE_PERCENT at creation time",
     )
@@ -493,7 +509,7 @@ class ReferralPayout(TimeStampedModel):
         default=Decimal("0.00"),
         help_text="Amount carried forward from prior below-threshold periods.",
     )
-    currency = models.CharField(max_length=3, default=settings.DEFAULT_CURRENCY)
+    currency = models.CharField(max_length=3, default=_default_currency)
     status = models.CharField(
         max_length=20, choices=ReferralPayoutStatus.choices, default=ReferralPayoutStatus.CALCULATED, db_index=True
     )
@@ -535,7 +551,7 @@ class ReferralPayoutStatement(EmailDeliverableMixin, TimeStampedModel):
     amount_net = models.DecimalField(max_digits=10, decimal_places=2, help_text="Payout excluding VAT.")
     amount_vat = models.DecimalField(max_digits=10, decimal_places=2, help_text="VAT portion.")
     vat_rate = models.DecimalField(max_digits=5, decimal_places=2, help_text="VAT rate applied.")
-    currency = models.CharField(max_length=3, default=settings.DEFAULT_CURRENCY)
+    currency = models.CharField(max_length=3, default=_default_currency)
     reverse_charge = models.BooleanField(default=False, help_text="EU cross-border B2B reverse charge.")
 
     # Referrer snapshot

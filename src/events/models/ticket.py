@@ -25,6 +25,17 @@ if t.TYPE_CHECKING:
 DEFAULT_TICKET_TIER_NAME = "Entrada Geral"
 
 
+def _default_currency() -> str:
+    """Resolve at save time, not migration-generation time.
+
+    A bare ``default=settings.DEFAULT_CURRENCY`` bakes whatever value is
+    configured in the environment where ``makemigrations`` happens to run
+    into the migration file as a literal, producing a spurious pending
+    migration on every other environment with a different value.
+    """
+    return settings.DEFAULT_CURRENCY
+
+
 class CancellationSource(models.TextChoices):
     """Who or what cancelled the ticket."""
 
@@ -288,7 +299,7 @@ class TicketTier(TimeStampedModel, VisibilityMixin):
         validators=[MinValueValidator(1)],
         help_text="Maximum amount for pay-what-you-can pricing (optional)",
     )
-    currency = models.CharField(max_length=3, default=settings.DEFAULT_CURRENCY, help_text="ISO 4217 currency code")
+    currency = models.CharField(max_length=3, default=_default_currency, help_text="ISO 4217 currency code")
     sales_start_at = models.DateTimeField(
         null=True, blank=True, db_index=True, help_text="When ticket sales begin for this tier"
     )
@@ -814,7 +825,7 @@ class Payment(TimeStampedModel):
     status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     platform_fee = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=3, default=settings.DEFAULT_CURRENCY)
+    currency = models.CharField(max_length=3, default=_default_currency)
 
     # Ticket sale VAT breakdown (calculated in-house, all nullable for historical payments)
     net_amount = models.DecimalField(

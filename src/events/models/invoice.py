@@ -6,6 +6,17 @@ from common.fields import ProtectedFileField
 from common.models import EmailDeliverableMixin, TimeStampedModel
 
 
+def _default_currency() -> str:
+    """Resolve at save time, not migration-generation time.
+
+    A bare ``default=settings.DEFAULT_CURRENCY`` bakes whatever value is
+    configured in the environment where ``makemigrations`` happens to run
+    into the migration file as a literal, producing a spurious pending
+    migration on every other environment with a different value.
+    """
+    return settings.DEFAULT_CURRENCY
+
+
 class PlatformFeeInvoice(EmailDeliverableMixin, TimeStampedModel):
     """Monthly platform fee invoice for an organization.
 
@@ -44,7 +55,7 @@ class PlatformFeeInvoice(EmailDeliverableMixin, TimeStampedModel):
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], help_text="VAT portion of the fee."
     )
     fee_vat_rate = models.DecimalField(max_digits=5, decimal_places=2, help_text="VAT rate applied to this invoice.")
-    currency = models.CharField(max_length=3, default=settings.DEFAULT_CURRENCY, help_text="ISO 4217 currency code.")
+    currency = models.CharField(max_length=3, default=_default_currency, help_text="ISO 4217 currency code.")
     reverse_charge = models.BooleanField(
         default=False, help_text="Whether reverse charge applies (EU B2B cross-border)."
     )

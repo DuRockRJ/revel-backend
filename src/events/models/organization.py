@@ -2,6 +2,7 @@ import typing as t
 import uuid
 from collections import Counter
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from django.conf import settings
@@ -33,6 +34,22 @@ ALLOWED_MEMBERSHIP_REQUEST_METHODS = ["telegram", "email", "webform"]  # kept fo
 
 def _validate_membership_request_methods(value: list[str]) -> None:
     pass  # kept for backwards compatibility
+
+
+def _default_platform_fee_percent() -> Decimal:
+    """Resolve at save time, not migration-generation time.
+
+    A bare ``default=settings.DEFAULT_PLATFORM_FEE_PERCENT`` bakes whatever
+    value is configured in the environment where ``makemigrations`` happens
+    to run into the migration file as a literal, producing a spurious
+    pending migration on every other environment with a different value.
+    """
+    return settings.DEFAULT_PLATFORM_FEE_PERCENT
+
+
+def _default_platform_fee_fixed() -> Decimal:
+    """Resolve at save time, not migration-generation time (same reasoning as above)."""
+    return settings.DEFAULT_PLATFORM_FEE_FIXED
 
 
 class OrgTractionRow(t.NamedTuple):
@@ -308,14 +325,14 @@ class Organization(
     platform_fee_percent = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=settings.DEFAULT_PLATFORM_FEE_PERCENT,
+        default=_default_platform_fee_percent,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="The percentage platform fee Revel takes on ticket sales for this organization.",
     )
     platform_fee_fixed = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=settings.DEFAULT_PLATFORM_FEE_FIXED,
+        default=_default_platform_fee_fixed,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="The fixed platform fee for this organization.",
     )

@@ -9,6 +9,22 @@ from solo.models import SingletonModel
 from common.fields import MarkdownField
 
 
+def _default_frontend_base_url() -> str:
+    """Resolve at save time, not migration-generation time.
+
+    A bare ``default=settings.FRONTEND_BASE_URL`` bakes whatever value is
+    configured in the environment where ``makemigrations`` happens to run
+    into the migration file as a literal, producing a spurious pending
+    migration on every other environment with a different value.
+    """
+    return settings.FRONTEND_BASE_URL
+
+
+def _default_internal_catchall_email() -> str:
+    """Resolve at save time, not migration-generation time (same reasoning as above)."""
+    return settings.INTERNAL_CATCHALL_EMAIL
+
+
 class Legal(SingletonModel):
     """Singleton model for legal documents like Terms and Conditions and Privacy Policy."""
 
@@ -51,11 +67,11 @@ class SiteSettings(SingletonModel):
         default=30,
     )
     live_emails = models.BooleanField(default=False, help_text="Live-emails enabled")
-    frontend_base_url = models.URLField(default=settings.FRONTEND_BASE_URL)
+    frontend_base_url = models.URLField(default=_default_frontend_base_url)
     internal_catchall_email = models.EmailField(
         verbose_name="Internal Catchall Email",
         help_text="The catchall email address for internal use.",
-        default=settings.INTERNAL_CATCHALL_EMAIL,
+        default=_default_internal_catchall_email,
     )
 
     # Platform business details for VAT invoicing
