@@ -1,9 +1,7 @@
-{% load i18n %}<!DOCTYPE html>
-<html>
-<head>
-    <title>{% trans "Your Data Export is Ready" %}</title>
-</head>
-<body>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block title %}{% trans "Your Data Export is Ready" %}{% endblock %}
+{% block content %}
     <p>{% blocktrans %}Hi {{ user.username }},{% endblocktrans %}</p>
     <p>{% blocktrans %}Your data export from Revel is ready to be downloaded.{% endblocktrans %}</p>
     <p>
@@ -15,5 +13,4 @@
         {% blocktrans %}Best,<br>
         The Revel Team{% endblocktrans %}
     </p>
-</body>
-</html>
+{% endblock %}

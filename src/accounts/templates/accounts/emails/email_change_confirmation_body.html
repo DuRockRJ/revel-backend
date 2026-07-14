@@ -1,15 +1,12 @@
-{% load i18n %}<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{% trans "Confirm your new email address" %}</title>
-</head>
-<body>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block title %}{% trans "Confirm your new email address" %}{% endblock %}
+{% block content %}
     <h2>{% trans "Confirm your new email address" %}</h2>
     <p>{% blocktrans %}You (or someone using your account) asked to change the email address on your Revel account to this one. To confirm the change, click the button below:{% endblocktrans %}</p>
 
     <p>
-        <a href="{{ action_link }}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px;">
+        <a href="{{ action_link }}" style="display: inline-block; padding: 10px 20px; background-color: #FFD60A; color: #1a1a1a; text-decoration: none; border-radius: 5px;">
             {% trans "Confirm new email" %}
         </a>
     </p>
@@ -19,5 +16,4 @@
     <p>{% blocktrans %}If you weren't expecting this email, you can safely ignore it — nothing will change until the link is clicked.{% endblocktrans %}</p>
 
     <p>{% blocktrans %}Thank you,<br>The Revel Team{% endblocktrans %}</p>
-</body>
-</html>
+{% endblock %}

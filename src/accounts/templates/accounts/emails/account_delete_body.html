@@ -1,10 +1,7 @@
-{% load i18n %}<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{% trans "Confirm Account Deletion" %}</title>
-</head>
-<body>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block title %}{% trans "Confirm Account Deletion" %}{% endblock %}
+{% block content %}
     <h2>{% trans "Confirm Account Deletion" %}</h2>
     <p>{% blocktrans %}You have received this email because you have requested to delete your account at
         <a href="{{ frontend_base_url }}">Revel</a>.{% endblocktrans %}
@@ -21,5 +18,4 @@
     </p>
 
     <p>{% blocktrans %}Thank you,<br>The Revel Team{% endblocktrans %}</p>
-</body>
-</html>
+{% endblock %}

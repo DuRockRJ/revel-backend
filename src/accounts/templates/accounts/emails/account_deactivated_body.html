@@ -1,15 +1,12 @@
-{% load i18n %}<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{% trans "Account Deactivated" %}</title>
-</head>
-<body>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block title %}{% trans "Account Deactivated" %}{% endblock %}
+{% block content %}
     <h2 style="color: #dc3545;">{% trans "Your account has been deactivated" %}</h2>
     <p>{% blocktrans %}Your Revel account has been deactivated because your email address was not verified.{% endblocktrans %}</p>
     <p><strong>{% blocktrans %}You can still verify your email to reactivate your account:{% endblocktrans %}</strong></p>
     <p>
-        <a href="{{ verification_link }}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px;">
+        <a href="{{ verification_link }}" style="display: inline-block; padding: 10px 20px; background-color: #FFD60A; color: #1a1a1a; text-decoration: none; border-radius: 5px;">
             {% trans "Verify Email & Reactivate" %}
         </a>
     </p>
@@ -21,5 +18,4 @@
         {% blocktrans with link=deletion_link %}If you didn't sign up for Revel, you can <a href="{{ link }}">delete your account immediately</a>.{% endblocktrans %}
     </p>
     <p>{% blocktrans %}Thank you,<br>The Revel Team{% endblocktrans %}</p>
-</body>
-</html>
+{% endblock %}

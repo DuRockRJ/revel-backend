@@ -1,15 +1,12 @@
-{% load i18n %}<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{% trans "Activate Your Account" %}</title>
-</head>
-<body>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block title %}{% trans "Activate Your Account" %}{% endblock %}
+{% block content %}
     <h2>{% trans "Activate Your Account" %}</h2>
     <p>{% blocktrans %}To complete setting up your Revel account, please click the link below to set your password:{% endblocktrans %}</p>
 
     <p>
-        <a href="{{ action_link }}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px;">
+        <a href="{{ action_link }}" style="display: inline-block; padding: 10px 20px; background-color: #FFD60A; color: #1a1a1a; text-decoration: none; border-radius: 5px;">
             {% trans "Set Password" %}
         </a>
     </p>
@@ -17,5 +14,4 @@
     <p>{% blocktrans %}If you didn't request this, you can safely ignore this email.{% endblocktrans %}</p>
 
     <p>{% blocktrans %}Thank you,<br>The Revel Team{% endblocktrans %}</p>
-</body>
-</html>
+{% endblock %}

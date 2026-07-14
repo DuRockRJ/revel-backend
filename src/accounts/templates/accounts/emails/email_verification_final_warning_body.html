@@ -1,10 +1,7 @@
-{% load i18n %}<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{% trans "Urgent: Verify Your Email" %}</title>
-</head>
-<body>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block title %}{% trans "Urgent: Verify Your Email" %}{% endblock %}
+{% block content %}
     <h2 style="color: #dc3545;">{% trans "URGENT: Your account will be deactivated soon" %}</h2>
     <p><strong>{% blocktrans %}Your Revel account has not been verified and will be deactivated shortly if you don't verify your email address.{% endblocktrans %}</strong></p>
     <p>{% trans "Please verify your email now to keep your account active:" %}</p>
@@ -18,5 +15,4 @@
         {% blocktrans with link=deletion_link %}If you didn't sign up for Revel, you can <a href="{{ link }}">delete your account</a>.{% endblocktrans %}
     </p>
     <p>{% blocktrans %}Thank you,<br>The Revel Team{% endblocktrans %}</p>
-</body>
-</html>
+{% endblock %}

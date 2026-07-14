@@ -1,5 +1,9 @@
-{% load i18n %}<p>{% trans "A user data export has failed." %}</p>
-<p><b>{% trans "User:" %}</b> {{ user.email }}</p>
-<p><b>{% trans "Error:" %}</b></p>
-<pre>{{ error_message }}</pre>
-<p>{% trans "Please investigate this issue as soon as possible." %}</p>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block content %}
+    <p>{% trans "A user data export has failed." %}</p>
+    <p><b>{% trans "User:" %}</b> {{ user.email }}</p>
+    <p><b>{% trans "Error:" %}</b></p>
+    <pre>{{ error_message }}</pre>
+    <p>{% trans "Please investigate this issue as soon as possible." %}</p>
+{% endblock %}

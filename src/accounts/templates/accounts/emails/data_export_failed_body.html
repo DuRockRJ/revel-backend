@@ -1,5 +1,9 @@
-{% load i18n %}<p>{% blocktrans %}Hi {{ user.first_name }},{% endblocktrans %}</p>
-<p>{% blocktrans %}Unfortunately, we were unable to generate your data export.{% endblocktrans %}</p>
-<p>{% blocktrans %}We have been notified of this issue and are working to resolve it as soon as possible.{% endblocktrans %}</p>
-<p>{% blocktrans %}We apologize for any inconvenience.{% endblocktrans %}</p>
-<p>{% blocktrans %}Thanks,<br>The Revel Team{% endblocktrans %}</p>
+{% extends "common/emails/base_email.html" %}
+{% load i18n %}
+{% block content %}
+    <p>{% blocktrans %}Hi {{ user.first_name }},{% endblocktrans %}</p>
+    <p>{% blocktrans %}Unfortunately, we were unable to generate your data export.{% endblocktrans %}</p>
+    <p>{% blocktrans %}We have been notified of this issue and are working to resolve it as soon as possible.{% endblocktrans %}</p>
+    <p>{% blocktrans %}We apologize for any inconvenience.{% endblocktrans %}</p>
+    <p>{% blocktrans %}Thanks,<br>The Revel Team{% endblocktrans %}</p>
+{% endblock %}
