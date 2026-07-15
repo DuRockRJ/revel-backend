@@ -63,7 +63,6 @@ def submitter(revel_user_factory: RevelUserFactory) -> RevelUser:
         email="submitter@example.com",
         first_name="Jane",
         last_name="Smith",
-        pronouns="she/her",
     )
 
 
@@ -269,12 +268,6 @@ class TestQuestionnaireExportContent:
         assert summary["Average score"] == 85.50
         assert summary["Min score"] == 85.50
         assert summary["Max score"] == 85.50
-
-        # Pronoun distribution
-        assert summary["Pronoun Distribution"] is None  # header row, value column is empty
-        assert summary["Total with pronouns"] == 1
-        assert summary["Total without pronouns"] == 0
-        assert summary["  she/her"] == 1
 
     def test_submissions_sheet_headers(
         self,
@@ -541,8 +534,6 @@ class TestQuestionnaireExportEmpty:
         assert summary["Total submissions"] == 0
         assert summary["Unique users"] == 0
         assert summary["Average score"] == "N/A"
-        assert summary["Total with pronouns"] == 0
-        assert summary["Total without pronouns"] == 0
 
     def test_empty_submissions_has_submissions_sheet(
         self,
@@ -645,9 +636,6 @@ class TestQuestionnaireExportMultipleSubmissions:
         assert summary["Rejected"] == 1
         assert summary["Not evaluated"] == 1
         assert summary["Average score"] == 60.00  # (90 + 30) / 2
-        # Factory users get random pronouns by default
-        assert summary["Total with pronouns"] == 3
-        assert summary["Total without pronouns"] == 0
 
         ws_subs = wb["Submissions"]
         data_rows = list(ws_subs.iter_rows(min_row=2, values_only=True))

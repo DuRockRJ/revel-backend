@@ -383,7 +383,7 @@ class MembershipGate(BaseEligibilityGate):
 
 
 class FullProfileGate(BaseEligibilityGate):
-    """Gate #8: When an Event has a .requires_full_profile == True, user must have profile pic, name and pronouns."""
+    """Gate #8: When an Event has a .requires_full_profile == True, user must have profile pic and name."""
 
     def check(self) -> EventUserEligibility | None:
         """Check if full profile is valid."""
@@ -394,8 +394,6 @@ class FullProfileGate(BaseEligibilityGate):
 
         if not self.user.profile_picture:
             missing_profile_fields.append("profile_picture")
-        if not self.user.pronouns:
-            missing_profile_fields.append("pronouns")
         if not (self.user.first_name or self.user.last_name or self.user.preferred_name):
             missing_profile_fields.append("name")
 

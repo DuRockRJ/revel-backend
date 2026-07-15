@@ -44,7 +44,6 @@ class RevelUserSchema(ProfilePictureSchemaMixin, ModelSchema):
     email: str
     email_verified: bool
     preferred_name: str
-    pronouns: str
     is_active: bool
     first_name: str
     last_name: str
@@ -61,7 +60,6 @@ class RevelUserSchema(ProfilePictureSchemaMixin, ModelSchema):
 
 class MinimalRevelUserSchema(ProfilePictureSchemaMixin, ModelSchema):
     preferred_name: str | None
-    pronouns: str | None
     first_name: str
     last_name: str
     email: str
@@ -70,7 +68,7 @@ class MinimalRevelUserSchema(ProfilePictureSchemaMixin, ModelSchema):
 
     class Meta:
         model = RevelUser
-        fields = ["id", "preferred_name", "pronouns", "first_name", "last_name", "email"]
+        fields = ["id", "preferred_name", "first_name", "last_name", "email"]
 
 
 class MemberUserSchema(ProfilePictureSchemaMixin, ModelSchema):
@@ -79,7 +77,7 @@ class MemberUserSchema(ProfilePictureSchemaMixin, ModelSchema):
 
     class Meta:
         model = RevelUser
-        fields = ["id", "email", "phone_number", "preferred_name", "pronouns", "first_name", "last_name"]
+        fields = ["id", "email", "phone_number", "preferred_name", "first_name", "last_name"]
 
 
 class TOTPProvisioningUriSchema(Schema):
@@ -243,7 +241,6 @@ class ProfileUpdateSchema(Schema):
     """Schema for updating user profile information."""
 
     preferred_name: StrippedString = Field(..., max_length=255, description="User's preferred name")
-    pronouns: StrippedString = Field(..., max_length=100, description="User's pronouns")
     first_name: StrippedString = Field(..., max_length=30, description="User's first name")
     last_name: StrippedString = Field(..., max_length=150, description="User's last name")
     language: SupportedLanguage = Field(

@@ -22,7 +22,6 @@ from accounts.models import RevelUser
 from common.utils import get_or_create_with_race_protection, update_db_instance
 from events.models import Event, EventQuestionnaireSubmission, EventSeries, Organization, OrganizationQuestionnaire
 from events.schema import OrganizationQuestionnaireCreateSchema, OrganizationQuestionnaireUpdateSchema
-from events.schema.pronouns import EventPronounDistributionSchema, PronounCountSchema
 from events.schema.questionnaire import (
     McOptionStatSchema,
     McQuestionStatSchema,
@@ -294,33 +293,6 @@ def aggregate_mc_distributions(
     return list(questions_map.values())
 
 
-def _aggregate_pronoun_distribution(
-    base_qs: QuerySet[QuestionnaireSubmission],
-) -> EventPronounDistributionSchema:
-    """Compute pronoun distribution for users who submitted the questionnaire."""
-    user_ids = base_qs.values_list("user_id", flat=True).distinct()
-    pronoun_rows = (
-        RevelUser.objects.filter(id__in=user_ids).values("pronouns").annotate(count=Count("id")).order_by("-count")
-    )
-
-    pronoun_dist: list[PronounCountSchema] = []
-    total_with_pronouns = 0
-    total_without_pronouns = 0
-    for row in pronoun_rows:
-        if row["pronouns"]:
-            pronoun_dist.append(PronounCountSchema(pronouns=row["pronouns"], count=row["count"]))
-            total_with_pronouns += row["count"]
-        else:
-            total_without_pronouns = row["count"]
-
-    return EventPronounDistributionSchema(
-        distribution=pronoun_dist,
-        total_with_pronouns=total_with_pronouns,
-        total_without_pronouns=total_without_pronouns,
-        total_attendees=total_with_pronouns + total_without_pronouns,
-    )
-
-
 def get_questionnaire_summary(
     *,
     questionnaire_id: UUID,
@@ -394,7 +366,6 @@ def get_questionnaire_summary(
             max=stats["max_score"],
         ),
         mc_question_stats=aggregate_mc_distributions(questionnaire_id, base_qs),
-        pronoun_distribution=_aggregate_pronoun_distribution(base_qs),
     )
 
 

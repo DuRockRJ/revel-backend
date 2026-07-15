@@ -721,7 +721,6 @@ class TestDuplicateEvent:
             start=timezone.now(),
             address_visibility=ResourceVisibility.ATTENDEES_ONLY,
             requires_full_profile=True,
-            public_pronoun_distribution=True,
             max_tickets_per_user=5,
             location_maps_url="https://maps.example.com/place",
             location_maps_embed="https://www.google.com/maps/embed?pb=example",
@@ -735,7 +734,6 @@ class TestDuplicateEvent:
 
         assert new_event.address_visibility == ResourceVisibility.ATTENDEES_ONLY
         assert new_event.requires_full_profile is True
-        assert new_event.public_pronoun_distribution is True
         assert new_event.max_tickets_per_user == 5
         assert new_event.location_maps_url == "https://maps.example.com/place"
         assert new_event.location_maps_embed == "https://www.google.com/maps/embed?pb=example"

@@ -477,7 +477,7 @@ def _create_feedback_questionnaire(state: BootstrapState) -> None:
 
 
 def _create_wine_tasting_submissions(state: BootstrapState) -> None:
-    """Create sample submissions for the Wine Tasting questionnaire with diverse pronouns."""
+    """Create sample submissions for the Wine Tasting questionnaire."""
     logger.info("Creating wine tasting questionnaire submissions...")
 
     rng = random.Random(99)
@@ -504,13 +504,12 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         question__startswith="What draws you to this wine tasting",
     )
 
-    # Submitter profiles: (email, name, pronouns, interest_answer, experience_idx, eval_status, score)
+    # Submitter profiles: (email, name, interest_answer, experience_idx, eval_status, score)
     EvalStatus = questionnaires_models.QuestionnaireEvaluation.QuestionnaireEvaluationStatus
     submitters = [
         (
             "sophie.wine@example.com",
             "Sophie Laurent",
-            "she/her",
             "I grew up in Burgundy surrounded by vineyards. Wine is in my blood!",
             2,
             EvalStatus.APPROVED,
@@ -519,7 +518,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "marco.wine@example.com",
             "Marco Bianchi",
-            "he/him",
             "I'm a sommelier in training and would love to expand my palate.",
             1,
             EvalStatus.APPROVED,
@@ -528,7 +526,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "alex.wine@example.com",
             "Alex Rivera",
-            "they/them",
             "I've been collecting natural wines for years and love exploring new regions.",
             2,
             EvalStatus.APPROVED,
@@ -537,7 +534,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "priya.wine@example.com",
             "Priya Sharma",
-            "she/her",
             "I'm curious about wine pairing — I'm a chef and want to improve my recommendations.",
             1,
             EvalStatus.APPROVED,
@@ -546,7 +542,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "jordan.wine@example.com",
             "Jordan Kim",
-            "he/they",
             "Just starting to get into wine, excited to learn from experts!",
             0,
             EvalStatus.PENDING_REVIEW,
@@ -555,7 +550,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "sam.wine@example.com",
             "Sam Okafor",
-            "",
             "Wine nights with friends are my thing, want to take it to the next level.",
             0,
             EvalStatus.PENDING_REVIEW,
@@ -564,7 +558,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "elena.wine@example.com",
             "Elena Volkov",
-            "she/her",
             "I run a food blog and would love to cover this event.",
             1,
             EvalStatus.REJECTED,
@@ -573,7 +566,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "chris.wine@example.com",
             "Chris Park",
-            "he/him",
             "Free wine? Count me in lol",
             0,
             EvalStatus.REJECTED,
@@ -582,7 +574,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "taylor.wine@example.com",
             "Taylor Brooks",
-            "any pronouns",
             "I recently completed WSET Level 2 and am passionate about Austrian wines specifically.",
             2,
             None,
@@ -591,7 +582,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
         (
             "nina.wine@example.com",
             "Nina Andersson",
-            "she/they",
             "I host wine tasting events in Stockholm and would love to experience the Viennese scene.",
             1,
             None,
@@ -600,7 +590,7 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
     ]
 
     now = timezone.now()
-    for email, full_name, pronouns, interest, exp_idx, eval_status, score in submitters:
+    for email, full_name, interest, exp_idx, eval_status, score in submitters:
         name_parts = full_name.split()
         user = RevelUser.objects.create_user(
             username=email,
@@ -609,7 +599,6 @@ def _create_wine_tasting_submissions(state: BootstrapState) -> None:
             email_verified=True,
             first_name=name_parts[0],
             last_name=" ".join(name_parts[1:]),
-            pronouns=pronouns,
         )
 
         submission = questionnaires_models.QuestionnaireSubmission.objects.create(

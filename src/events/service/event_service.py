@@ -5,7 +5,6 @@ This module serves as a facade, re-exporting functions from:
 - tokens: Event token creation and claiming
 - invitations: Invitation request management
 - dietary: Dietary summary aggregation
-- pronouns: Pronoun distribution aggregation
 - duplication: Event duplication
 """
 
@@ -25,7 +24,6 @@ from events.service.invitations import (
     create_invitation_request,
     reject_invitation_request,
 )
-from events.service.pronouns import get_event_pronoun_distribution
 from events.service.tokens import (
     claim_invitation,
     create_event_token,
@@ -44,7 +42,6 @@ __all__ = [
     "create_invitation_request",
     "duplicate_event",
     "get_event_dietary_summary",
-    "get_event_pronoun_distribution",
     "get_event_token",
     "get_token_rejection_reason",
     "order_by_distance",

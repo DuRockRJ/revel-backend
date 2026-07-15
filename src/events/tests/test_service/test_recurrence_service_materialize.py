@@ -164,7 +164,6 @@ class TestMaterializeOccurrence:
         template = active_series.template_event
         assert template is not None
         template.max_tickets_per_user = 5
-        template.public_pronoun_distribution = True
         template.requires_full_profile = True
         template.address_visibility = ResourceVisibility.MEMBERS_ONLY
         template.accept_invitation_requests = True
@@ -180,7 +179,6 @@ class TestMaterializeOccurrence:
 
         # Assert — every field survived the duplicate.
         assert event.max_tickets_per_user == 5
-        assert event.public_pronoun_distribution is True
         assert event.requires_full_profile is True
         assert event.address_visibility == ResourceVisibility.MEMBERS_ONLY
         assert event.accept_invitation_requests is True

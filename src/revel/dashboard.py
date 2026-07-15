@@ -18,14 +18,6 @@ from notifications.models import NotificationDelivery
 from telegram.models import TelegramUser
 
 
-class PronounDistribution(t.TypedDict):
-    """Pie-chart data for the pronoun distribution card."""
-
-    labels: list[str]
-    data: list[int]
-    total: int
-
-
 class UserGrowthData(t.TypedDict):
     """Line-chart data for the user-growth card."""
 
@@ -94,35 +86,6 @@ class TopOrganizationsPayload(t.TypedDict):
     labels: list[str]
     data: list[int]
     rows: list[TopOrganizationRow]
-
-
-def _get_pronoun_distribution() -> PronounDistribution:
-    """Calculate pronoun distribution among users.
-
-    Returns:
-        Dictionary with labels and data for pie chart
-    """
-    # Get pronoun counts, excluding empty strings
-    pronoun_stats = (
-        RevelUser.objects.exclude(pronouns="").values("pronouns").annotate(count=Count("id")).order_by("-count")
-    )
-
-    # Count users without pronouns
-    no_pronouns_count = RevelUser.objects.filter(pronouns="").count()
-
-    labels = [stat["pronouns"] for stat in pronoun_stats]
-    data = [stat["count"] for stat in pronoun_stats]
-
-    # Add "Not specified" category if there are users without pronouns
-    if no_pronouns_count > 0:
-        labels.append("Not specified")
-        data.append(no_pronouns_count)
-
-    return {
-        "labels": labels,
-        "data": data,
-        "total": sum(data),
-    }
 
 
 def _get_user_growth_data(days: int = 30) -> UserGrowthData:
@@ -404,9 +367,6 @@ def dashboard_callback(request: HttpRequest, context: dict[str, t.Any]) -> dict[
     # User growth data
     user_growth = _get_user_growth_data(days=30)
 
-    # Pronoun distribution
-    pronoun_distribution = _get_pronoun_distribution()
-
     # Event analytics
     event_analytics = _get_event_analytics()
 
@@ -459,7 +419,6 @@ def dashboard_callback(request: HttpRequest, context: dict[str, t.Any]) -> dict[
                     "total_events": total_events,
                 },
                 "user_growth": user_growth,
-                "pronoun_distribution": pronoun_distribution,
                 "event_analytics": event_analytics,
                 "top_organizations": top_organizations,
                 "task_health": task_health,

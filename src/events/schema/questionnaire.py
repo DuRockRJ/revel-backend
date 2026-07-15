@@ -14,7 +14,6 @@ from questionnaires.models import Questionnaire
 
 from .event import MinimalEventSchema
 from .event_series import MinimalEventSeriesSchema
-from .pronouns import EventPronounDistributionSchema
 
 # ===== Summary schemas =====
 
@@ -52,7 +51,6 @@ class QuestionnaireSummarySchema(Schema):
     by_status_per_user: StatusBreakdownSchema
     score_stats: ScoreStatsSchema
     mc_question_stats: list[McQuestionStatSchema]
-    pronoun_distribution: EventPronounDistributionSchema
 
 
 class BaseOrganizationQuestionnaireSchema(Schema):

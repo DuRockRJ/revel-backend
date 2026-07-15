@@ -21,7 +21,7 @@ from questionnaires.models import (
     QuestionnaireSubmission,
 )
 
-from .formatting import auto_fit_columns, compute_pronoun_distribution, style_header_row, style_summary_sheet
+from .formatting import auto_fit_columns, style_header_row, style_summary_sheet
 
 logger = structlog.get_logger(__name__)
 
@@ -183,12 +183,6 @@ def _write_summary_sheet(
     min_score = min(scores) if scores else None
     max_score = max(scores) if scores else None
 
-    # Pronoun distribution (computed in-memory from prefetched users)
-    pronoun_stats = compute_pronoun_distribution((sub.user_id, sub.user) for sub in submissions if sub.user)
-    sorted_pronouns = pronoun_stats.sorted_pronouns
-    total_with_pronouns = pronoun_stats.total_with
-    total_without_pronouns = pronoun_stats.total_without
-
     for label, value in [
         ("Total submissions", stats["total"]),
         ("Unique users", stats["unique_users"]),
@@ -199,15 +193,8 @@ def _write_summary_sheet(
         ("Average score", round(avg_score, 2) if avg_score is not None else "N/A"),
         ("Min score", round(min_score, 2) if min_score is not None else "N/A"),
         ("Max score", round(max_score, 2) if max_score is not None else "N/A"),
-        ("", ""),
-        ("Pronoun Distribution", ""),
-        ("Total with pronouns", total_with_pronouns),
-        ("Total without pronouns", total_without_pronouns),
     ]:
         ws.append((label, value))
-
-    for pronouns, count in sorted_pronouns:
-        ws.append((f"  {pronouns}", count))
 
     style_summary_sheet(ws)
 

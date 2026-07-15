@@ -231,12 +231,6 @@ from .dietary import (
     EventDietarySummarySchema,
 )
 
-# Pronoun schemas
-from .pronouns import (
-    EventPronounDistributionSchema,
-    PronounCountSchema,
-)
-
 from .bookmark import EventBookmarkSchema
 
 # Follow schemas
@@ -529,9 +523,6 @@ __all__ = [
     "AggregatedDietaryPreferenceSchema",
     "AggregatedDietaryRestrictionSchema",
     "EventDietarySummarySchema",
-    # Pronouns
-    "EventPronounDistributionSchema",
-    "PronounCountSchema",
     # Bookmark
     "EventBookmarkSchema",
     # Follow

@@ -151,12 +151,10 @@ class RevelUserFactory:
         first_name = kwargs.pop("first_name", self.fake.first_name())
         last_name = kwargs.pop("last_name", self.fake.last_name())
         preferred_name = kwargs.pop("preferred_name", f"{first_name} {last_name}")
-        pronouns = kwargs.pop("pronouns", secrets.choice(["they/them", "he/him", "she/her"]))
         return RevelUser.objects.create_user(
             username=username,
             email=email,
             password=password,
-            pronouns=pronouns,
             preferred_name=preferred_name,
             first_name=first_name,
             last_name=last_name,

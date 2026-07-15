@@ -40,8 +40,6 @@ def test_submission_list_item_schema_resolve_user(questionnaire: Questionnaire) 
         last_name="Doe",
         preferred_name="Johnny",
     )
-    user.pronouns = "he/him"
-    user.save()
     submission = QuestionnaireSubmission.objects.create(user=user, questionnaire=questionnaire)
 
     user_schema = SubmissionListItemSchema.resolve_user(submission)
@@ -50,7 +48,6 @@ def test_submission_list_item_schema_resolve_user(questionnaire: Questionnaire) 
     assert user_schema.first_name == "John"
     assert user_schema.last_name == "Doe"
     assert user_schema.preferred_name == "Johnny"
-    assert user_schema.pronouns == "he/him"
     assert user_schema.display_name == "Johnny"  # Uses preferred_name when available
 
 

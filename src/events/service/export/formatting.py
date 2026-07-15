@@ -1,48 +1,8 @@
 """Shared Excel formatting utilities for export services."""
 
-import typing as t
-from uuid import UUID
-
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
-
-if t.TYPE_CHECKING:
-    from accounts.models import RevelUser
-
-
-class PronounStats(t.NamedTuple):
-    """Result of computing pronoun distribution.
-
-    Attributes:
-        sorted_pronouns: List of (pronoun, count) tuples sorted by count descending.
-        total_with: Total users who have specified pronouns.
-        total_without: Total users without pronouns specified.
-    """
-
-    sorted_pronouns: list[tuple[str, int]]
-    total_with: int
-    total_without: int
-
-
-def compute_pronoun_distribution(users: t.Iterable[tuple[UUID, "RevelUser"]]) -> PronounStats:
-    """Compute pronoun distribution from an iterable of (user_id, user) pairs.
-
-    Deduplicates by user_id. Users should already be resolved (not None).
-    """
-    pronoun_counts: dict[str, int] = {}
-    seen_user_ids: set[UUID] = set()
-    for user_id, user in users:
-        if user_id not in seen_user_ids:
-            seen_user_ids.add(user_id)
-            key = user.pronouns or ""
-            pronoun_counts[key] = pronoun_counts.get(key, 0) + 1
-
-    total_without = pronoun_counts.pop("", 0)
-    total_with = sum(pronoun_counts.values())
-    sorted_pronouns = sorted(pronoun_counts.items(), key=lambda x: x[1], reverse=True)
-    return PronounStats(sorted_pronouns, total_with, total_without)
-
 
 HEADER_FONT = Font(bold=True, color="FFFFFF", size=11)
 HEADER_FILL = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")

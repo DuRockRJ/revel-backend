@@ -47,17 +47,6 @@ DIETARY_PREFERENCES = [
     "Low-FODMAP",
 ]
 
-# Common pronouns
-PRONOUNS = [
-    "he/him",
-    "she/her",
-    "they/them",
-    "he/they",
-    "she/they",
-    "any pronouns",
-    "",  # Some users don't specify
-]
-
 
 class UserSeeder(BaseSeeder):
     """Seeder for RevelUser and dietary-related models."""
@@ -153,7 +142,6 @@ class UserSeeder(BaseSeeder):
             first_name=first_name,
             last_name=last_name,
             preferred_name=f"{first_name} {last_name}" if self.random_bool(0.7) else "",
-            pronouns=self.random_choice(PRONOUNS),
             email_verified=email_verified,
             is_active=True,
             guest=False,

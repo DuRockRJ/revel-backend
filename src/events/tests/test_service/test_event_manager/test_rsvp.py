@@ -153,7 +153,6 @@ def test_user_with_yes_rsvp_can_change_to_maybe_after_requirements_change(
 
     # Ensure user doesn't have a complete profile
     public_user.profile_picture = None
-    public_user.pronouns = ""
     public_user.preferred_name = ""
     public_user.save()
 
@@ -185,7 +184,6 @@ def test_user_with_yes_rsvp_can_change_to_no_after_requirements_change(
 
     # Ensure user doesn't have a complete profile
     public_user.profile_picture = None
-    public_user.pronouns = ""
     public_user.preferred_name = ""
     public_user.save()
 
@@ -217,7 +215,6 @@ def test_user_with_maybe_rsvp_cannot_change_to_yes_after_requirements_change(
 
     # Ensure user doesn't have a complete profile
     public_user.profile_picture = None
-    public_user.pronouns = ""
     public_user.preferred_name = ""
     public_user.save()
 

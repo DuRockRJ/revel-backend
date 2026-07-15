@@ -244,7 +244,6 @@ class CheckoutBenchmark(BaseBenchmarkCommand):
             first_name="Heavy",
             last_name="User",
             preferred_name="Heavy User",
-            pronouns="they/them",
         )
 
         # Give user approved questionnaire submission
@@ -413,12 +412,11 @@ class CheckoutBenchmark(BaseBenchmarkCommand):
             "prof_user",
             first_name="Full",
             last_name="Profile",
-            pronouns="they/them",
         )
 
         return BenchmarkScenario(
             name="FULL_PROFILE",
-            description="Event requiring full profile (name, pronouns, picture)",
+            description="Event requiring full profile (name, picture)",
             organization=org,
             event=event,
             tier=tier,

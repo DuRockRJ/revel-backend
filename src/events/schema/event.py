@@ -42,7 +42,6 @@ class EventEditSchema(CityEditMixin):
     venue_id: UUID | None = None
     potluck_open: bool = False
     accept_invitation_requests: bool = False
-    public_pronoun_distribution: bool = False
     apply_before: AwareDatetime | None = Field(
         None, description="Deadline for submitting invitation requests or questionnaires"
     )
@@ -122,7 +121,6 @@ class EventBaseSchema(TaggableSchemaMixin, LogoCoverArtThumbnailMixin):
     potluck_open: bool
     attendee_count: int
     accept_invitation_requests: bool
-    public_pronoun_distribution: bool
     apply_before: AwareDatetime | None = None
     can_attend_without_login: bool
     # Recurring-series fields. Included in the base schema so list views can
@@ -297,4 +295,4 @@ class AttendeeSchema(ProfilePictureSchemaMixin, ModelSchema):
 
     class Meta:
         model = RevelUser
-        fields = ["preferred_name", "pronouns", "first_name", "last_name"]
+        fields = ["preferred_name", "first_name", "last_name"]

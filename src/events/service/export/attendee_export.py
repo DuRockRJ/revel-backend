@@ -11,7 +11,7 @@ from common.models import FileExport
 from common.service.export_service import complete_export, fail_export, start_export
 from events.models import Event, EventRSVP, Ticket
 
-from .formatting import auto_fit_columns, compute_pronoun_distribution, style_header_row, style_summary_sheet
+from .formatting import auto_fit_columns, style_header_row, style_summary_sheet
 
 logger = structlog.get_logger(__name__)
 
@@ -71,20 +71,6 @@ def _write_summary_sheet(
         ws = wb.create_sheet()
     ws.title = "Summary"
 
-    # Pronoun distribution (deduplicated by user)
-    def _user_pairs() -> t.Iterator[tuple[UUID, t.Any]]:
-        for ticket in tickets:
-            if ticket.user:
-                yield ticket.user_id, ticket.user
-        for rsvp in rsvps:
-            if rsvp.user:
-                yield rsvp.user_id, rsvp.user
-
-    pronoun_stats = compute_pronoun_distribution(_user_pairs())
-    sorted_pronouns = pronoun_stats.sorted_pronouns
-    total_with_pronouns = pronoun_stats.total_with
-    total_without_pronouns = pronoun_stats.total_without
-
     summary_rows: list[tuple[str, t.Any]] = [
         ("Event", event.name),
         ("Date", event.start.isoformat() if event.start else "N/A"),
@@ -94,15 +80,9 @@ def _write_summary_sheet(
         ("Tickets", len(tickets)),
         ("RSVPs", len(rsvps)),
         ("Checked in", ticket_checked_in),
-        ("", ""),
-        ("Pronoun Distribution", ""),
-        ("Total with pronouns", total_with_pronouns),
-        ("Total without pronouns", total_without_pronouns),
     ]
     for row in summary_rows:
         ws.append(row)
-    for pronouns, count in sorted_pronouns:
-        ws.append((f"  {pronouns}", count))
 
     style_summary_sheet(ws)
 
@@ -127,7 +107,6 @@ def _write_attendees_sheet(wb: Workbook, tickets: list[Ticket], rsvps: list[Even
     headers = [
         "Name",
         "Email",
-        "Pronouns",
         "Type",
         "RSVP Status",
         "Ticket Tier",
@@ -148,7 +127,6 @@ def _write_attendees_sheet(wb: Workbook, tickets: list[Ticket], rsvps: list[Even
             [
                 ticket.user.get_full_name() if ticket.user else "",
                 ticket.user.email if ticket.user else "",
-                ticket.user.pronouns if ticket.user else "",
                 "Ticket",
                 "",
                 ticket.tier.name if ticket.tier else "",
@@ -166,7 +144,6 @@ def _write_attendees_sheet(wb: Workbook, tickets: list[Ticket], rsvps: list[Even
             [
                 rsvp.user.get_full_name() if rsvp.user else "",
                 rsvp.user.email if rsvp.user else "",
-                rsvp.user.pronouns if rsvp.user else "",
                 "RSVP",
                 _RSVP_STATUS_DISPLAY.get(rsvp.status, rsvp.status) if rsvp.status else "",
                 "",

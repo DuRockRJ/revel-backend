@@ -89,7 +89,6 @@ def ticket_user(revel_user_factory: RevelUserFactory) -> RevelUser:
         email="ticket@example.com",
         first_name="Alice",
         last_name="Ticker",
-        pronouns="she/her",
     )
 
 
@@ -101,7 +100,6 @@ def rsvp_user(revel_user_factory: RevelUserFactory) -> RevelUser:
         email="rsvp@example.com",
         first_name="Bob",
         last_name="Rsvper",
-        pronouns="he/him",
     )
 
 
@@ -214,10 +212,6 @@ class TestAttendeeExportSummary:
         assert summary["Total attendees"] == 3
         assert summary["Checked in"] == 1
 
-        # Pronoun distribution
-        assert summary["Total with pronouns"] == 3
-        assert summary["Total without pronouns"] == 0
-
 
 # --- Attendees Sheet Tests ---
 
@@ -243,7 +237,6 @@ class TestAttendeeExportAttendees:
         expected_headers = [
             "Name",
             "Email",
-            "Pronouns",
             "Type",
             "RSVP Status",
             "Ticket Tier",
@@ -275,15 +268,14 @@ class TestAttendeeExportAttendees:
         assert len(rows) == 1
         row = rows[0]
 
-        # Name, email, pronouns
+        # Name, email
         assert "Alice" in str(row[0])  # Name
         assert row[1] == "ticket@example.com"  # Email
-        assert row[2] == "she/her"  # Pronouns
-        assert row[3] == "Ticket"  # Type
-        assert row[5] == "Free Tier"  # Ticket Tier
-        assert row[6] == "Active"  # Ticket Status
-        assert row[7] == "No"  # Checked In
-        assert row[9] == "Alice Ticker"  # Guest Name
+        assert row[2] == "Ticket"  # Type
+        assert row[4] == "Free Tier"  # Ticket Tier
+        assert row[5] == "Active"  # Ticket Status
+        assert row[6] == "No"  # Checked In
+        assert row[8] == "Alice Ticker"  # Guest Name
 
     def test_checked_in_ticket_row(
         self,
@@ -302,9 +294,9 @@ class TestAttendeeExportAttendees:
 
         assert len(rows) == 1
         row = rows[0]
-        assert row[6] == "Checked In"  # Ticket Status
-        assert row[7] == "Yes"  # Checked In
-        assert row[8] != ""  # Checked In At should have a value
+        assert row[5] == "Checked In"  # Ticket Status
+        assert row[6] == "Yes"  # Checked In
+        assert row[7] != ""  # Checked In At should have a value
 
     def test_rsvp_row_content(
         self,
@@ -326,12 +318,11 @@ class TestAttendeeExportAttendees:
         row = rows[0]
         assert "Bob" in str(row[0])  # Name
         assert row[1] == "rsvp@example.com"  # Email
-        assert row[2] == "he/him"  # Pronouns
-        assert row[3] == "RSVP"  # Type
-        assert row[4] == "Yes"  # RSVP Status
+        assert row[2] == "RSVP"  # Type
+        assert row[3] == "Yes"  # RSVP Status
         # The remaining fields should be empty/None for RSVPs
-        assert not row[5]  # Ticket Tier
-        assert not row[6]  # Ticket Status
+        assert not row[4]  # Ticket Tier
+        assert not row[5]  # Ticket Status
 
     def test_cancelled_tickets_excluded(
         self,
@@ -377,7 +368,7 @@ class TestAttendeeExportAttendees:
         rows = list(ws_att.iter_rows(min_row=2, values_only=True))
 
         assert len(rows) == 2
-        attendance_types = [row[3] for row in rows]
+        attendance_types = [row[2] for row in rows]
         assert "Ticket" in attendance_types
         assert "RSVP" in attendance_types
 
@@ -408,8 +399,6 @@ class TestAttendeeExportEmpty:
         assert summary["Tickets"] == 0
         assert summary["RSVPs"] == 0
         assert summary["Checked in"] == 0
-        assert summary["Total with pronouns"] == 0
-        assert summary["Total without pronouns"] == 0
 
     def test_empty_event_has_attendees_sheet(
         self,

@@ -189,7 +189,6 @@ def test_update_profile_success(auth_client: Client, user: RevelUser) -> None:
     url = reverse("api:update-profile")
     payload = {
         "preferred_name": "Alex Smith",
-        "pronouns": "they/them",
         "first_name": "Alexander",
         "last_name": "Smith Jr.",
         "language": "en",
@@ -200,14 +199,12 @@ def test_update_profile_success(auth_client: Client, user: RevelUser) -> None:
     assert response.status_code == 200, response.content
     data = response.json()
     assert data["preferred_name"] == "Alex Smith"
-    assert data["pronouns"] == "they/them"
     assert data["first_name"] == "Alexander"
     assert data["last_name"] == "Smith Jr."
 
     # Verify the user was actually updated in the database
     user.refresh_from_db()
     assert user.preferred_name == "Alex Smith"
-    assert user.pronouns == "they/them"
     assert user.first_name == "Alexander"
     assert user.last_name == "Smith Jr."
 
