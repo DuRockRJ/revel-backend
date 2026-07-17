@@ -48,11 +48,11 @@ logger = structlog.get_logger(__name__)
 def handle_organization_creation(
     sender: type[Organization], instance: Organization, created: bool, **kwargs: t.Any
 ) -> None:
-    """Create default 'General membership' tier and notify admin when an organization is created."""
+    """Create default 'Associação geral' tier and notify admin when an organization is created."""
     if not created:
         return
 
-    MembershipTier.objects.create(organization=instance, name="General membership")
+    MembershipTier.objects.create(organization=instance, name="Associação geral")
     logger.info(
         "default_membership_tier_created",
         organization_id=str(instance.id),

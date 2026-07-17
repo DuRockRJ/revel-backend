@@ -32,7 +32,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def tier(organization: Organization) -> MembershipTier:
-    return MembershipTier.objects.get(organization=organization, name="General membership")
+    return MembershipTier.objects.get(organization=organization, name="Associação geral")
 
 
 @pytest.fixture
@@ -140,7 +140,7 @@ class TestListOrganizationPlans:
             username="org_plans_other", email="org-plans-other@example.com", password="pass"
         )
         other_org = Organization.objects.create(name="Other Plans Org", slug="other-plans", owner=other_owner)
-        other_tier = MembershipTier.objects.get(organization=other_org, name="General membership")
+        other_tier = MembershipTier.objects.get(organization=other_org, name="Associação geral")
         subscription_service.create_plan(
             other_tier, name="Other", price=Decimal("9.00"), currency="EUR", period_unit="month"
         )
@@ -549,7 +549,7 @@ class TestListSubscriptionPayments:
             username="payments_other_owner", email="payments-other@example.com", password="pass"
         )
         other_org = Organization.objects.create(name="Other Payments Org", slug="other-payments", owner=other_owner)
-        other_tier = MembershipTier.objects.get(organization=other_org, name="General membership")
+        other_tier = MembershipTier.objects.get(organization=other_org, name="Associação geral")
         other_plan = subscription_service.create_plan(
             other_tier, name="Monthly", price=Decimal("5.00"), currency="EUR", period_unit="month"
         )
@@ -591,7 +591,7 @@ class TestCrossOrgIsolation:
     ) -> None:
         other_owner = RevelUser.objects.create_user(username="cross_owner", email="cross@example.com", password="pass")
         other_org = Organization.objects.create(name="Other Org", slug="other", owner=other_owner)
-        other_tier = MembershipTier.objects.get(organization=other_org, name="General membership")
+        other_tier = MembershipTier.objects.get(organization=other_org, name="Associação geral")
         other_plan = subscription_service.create_plan(
             other_tier, name="Monthly", price=Decimal("5.00"), currency="EUR", period_unit="month"
         )

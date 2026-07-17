@@ -23,7 +23,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def tier(organization: Organization) -> MembershipTier:
-    return MembershipTier.objects.get(organization=organization, name="General membership")
+    return MembershipTier.objects.get(organization=organization, name="Associação geral")
 
 
 @pytest.fixture
