@@ -1,3 +1,4 @@
+import hmac
 import typing as t
 
 import structlog
@@ -5,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest
 from django.utils import translation
+from ninja.security import HttpBearer
 
 from .auth_base import BaseJWTAuth
 
@@ -95,3 +97,24 @@ class OptionalAuth(I18nJWTAuth):
             return None
         token = " ".join(parts[1:])
         return self.authenticate(request, token)
+
+
+class ExternalIngestAuth(HttpBearer):
+    """Bearer-token auth for machine-to-machine event ingestion (e.g. rockfeed-rj).
+
+    Not a JWT: a single static shared secret configured via ``EXTERNAL_INGEST_API_KEY``.
+    The endpoint is disabled (auth always fails) when the setting is left empty.
+
+    Usage:
+        @route.post("/external/events", auth=ExternalIngestAuth())
+        def ingest_events(self, request, payload: list[EventIngestSchema]):
+            ...
+    """
+
+    def authenticate(self, request: HttpRequest, token: str) -> str | None:
+        """Return the token itself if it matches the configured shared secret."""
+        if not settings.EXTERNAL_INGEST_API_KEY:
+            return None
+        if not hmac.compare_digest(token, settings.EXTERNAL_INGEST_API_KEY):
+            return None
+        return token

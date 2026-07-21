@@ -23,6 +23,7 @@ from events.controllers.event_public import EVENT_PUBLIC_CONTROLLERS
 from events.controllers.event_series import EventSeriesController
 from events.controllers.event_series_admin import EventSeriesAdminController
 from events.controllers.exports import ExportController
+from events.controllers.external_ingest import ExternalIngestController
 from events.controllers.following import FollowingController
 from events.controllers.me_subscriptions import MeSubscriptionsController
 from events.controllers.organization import OrganizationController
@@ -143,6 +144,7 @@ api.register_controllers(
     MeSubscriptionsController,
     StripeWebhookController,
     ExportController,
+    ExternalIngestController,
     # Common controllers
     MediaValidationController,
     TagController,

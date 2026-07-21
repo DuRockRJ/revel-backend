@@ -2,6 +2,7 @@ from .base import *  # noqa: F403, F401
 from .celery import *  # noqa: F403, F401
 from .features import *  # noqa: F403, F401
 from .email import *  # noqa: F403, F401
+from .external_ingest import *  # noqa: F403, F401
 from .llm import *  # noqa: F403, F401
 from .ninja import *  # noqa: F403, F401
 from .observability import *  # noqa: F403, F401

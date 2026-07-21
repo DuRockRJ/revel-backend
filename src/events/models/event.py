@@ -263,6 +263,16 @@ class Event(
     cancellation_reason = models.CharField(max_length=1000, blank=True, default="")
     name = models.CharField(max_length=255, db_index=True)
     slug = models.SlugField(max_length=255, db_index=True)
+    external_uid = models.CharField(
+        max_length=64,
+        unique=True,
+        db_index=True,
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Stable dedup key from an external ingestion source (e.g. rockfeed-rj). "
+        "Null for events created in-app.",
+    )
     description = MarkdownField(blank=True, null=True)
     invitation_message = MarkdownField(
         blank=True,
