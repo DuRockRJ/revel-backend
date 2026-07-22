@@ -89,6 +89,19 @@ class TestExternalIngestEvents:
         assert tier.price == Decimal("80.00")
         assert tier.name == "Sympla"
 
+    def test_titlecases_fully_uppercase_title(self, client: Client) -> None:
+        response = _post(client, [_payload(uid="shouting-uid", title="TRIBUTO AO IRON MAIDEN COM A SHE BEAST!")])
+
+        assert response.status_code == 200
+        event = Event.objects.get(external_uid="shouting-uid")
+        assert event.name == "Tributo Ao Iron Maiden Com A She Beast!"
+
+    def test_leaves_mixed_case_title_untouched(self, client: Client) -> None:
+        _post(client, [_payload(uid="mixed-case-uid", title="SanforRock")])
+
+        event = Event.objects.get(external_uid="mixed-case-uid")
+        assert event.name == "SanforRock"
+
     def test_tier_name_uses_platform_before_colon(self, client: Client) -> None:
         _post(client, [_payload(uid="meaple-uid", source="meaple:orockvive")])
 

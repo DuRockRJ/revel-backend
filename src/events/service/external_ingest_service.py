@@ -80,6 +80,16 @@ def _tier_name_from_source(source: str) -> str:
     return _TIER_NAME_OVERRIDES.get(platform, platform.capitalize())
 
 
+def _normalize_title(title: str) -> str:
+    """Title-case a fully-uppercase scraped title; leave anything else as-is.
+
+    Sources often send show titles SHOUTING IN ALL CAPS. Mixed-case titles
+    (including intentional stylizations) are the organizer's choice, not
+    ours to "fix", so only the all-caps case is touched.
+    """
+    return title.title() if title.isupper() else title
+
+
 def _build_address(item: EventIngestSchema) -> str:
     """Combine venue/address/city into one plain-text field.
 
@@ -147,7 +157,7 @@ def _ingest_one(item: EventIngestSchema) -> EventIngestResultSchema:
             # placeholder just because this scrape came back empty.
             if item.organizer.strip():
                 existing.organization = _resolve_organization(item.organizer)
-            existing.name = item.title
+            existing.name = _normalize_title(item.title)
             existing.start = start
             existing.end = end
             existing.address = address or None
@@ -162,7 +172,7 @@ def _ingest_one(item: EventIngestSchema) -> EventIngestResultSchema:
                 organization=organization,
                 venue=_resolve_default_venue(organization),
                 external_uid=item.uid,
-                name=item.title,
+                name=_normalize_title(item.title),
                 status=Event.EventStatus.DRAFT,
                 event_type=Event.EventType.PUBLIC,
                 visibility=Event.Visibility.PUBLIC,
