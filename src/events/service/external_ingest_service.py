@@ -153,10 +153,10 @@ def _ingest_one(item: EventIngestSchema) -> EventIngestResultSchema:
 
     with transaction.atomic():
         if existing:
-            # Don't regress a previously-resolved organizer back to the
-            # placeholder just because this scrape came back empty.
-            if item.organizer.strip():
-                existing.organization = _resolve_organization(item.organizer)
+            # Organization is set once, at creation, and never touched again:
+            # re-resolving on every scrape risks creating a near-duplicate org
+            # for minor organizer-text drift, and would clobber a manual
+            # reassignment made while reviewing the draft.
             existing.name = _normalize_title(item.title)
             existing.start = start
             existing.end = end

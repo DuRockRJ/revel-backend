@@ -190,6 +190,19 @@ class TestExternalIngestEvents:
         event = Event.objects.get(external_uid="keep-org-uid")
         assert event.organization.name == "Produtora Confiável"
 
+    def test_reingestion_never_reassigns_organization(self, client: Client) -> None:
+        """Organization is set once at creation; a later scrape must not move the
+        event to a different org, even if the organizer text changes — protects
+        a manual reassignment made while reviewing the draft."""
+        _post(client, [_payload(uid="sticky-org-uid", organizer="Produtora Original")])
+        original_org_id = Event.objects.get(external_uid="sticky-org-uid").organization_id
+
+        _post(client, [_payload(uid="sticky-org-uid", organizer="Produtora Diferente")])
+
+        event = Event.objects.get(external_uid="sticky-org-uid")
+        assert event.organization_id == original_org_id
+        assert not Organization.objects.filter(name="Produtora Diferente").exists()
+
     def test_dispatches_cover_art_task_when_image_present(
         self, client: Client, django_capture_on_commit_callbacks: t.Any
     ) -> None:
