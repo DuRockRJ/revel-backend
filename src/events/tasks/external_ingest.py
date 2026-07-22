@@ -22,9 +22,12 @@ _DOWNLOAD_TIMEOUT_SECONDS = 15
 
 # Below this, treat the source image as a placeholder/logo rather than a real
 # cover photo (observed in practice: venue logos at 166x166/222x222, and a
-# handful of literal 1x1 blank placeholders from some sources).
-_MIN_COVER_ART_WIDTH = 300
-_MIN_COVER_ART_HEIGHT = 150
+# handful of literal 1x1 blank placeholders from some sources). Checked
+# against the image's long/short side rather than literal width/height, so
+# portrait posters (common for BR show flyers) aren't penalized for being
+# narrower than a landscape banner.
+_MIN_COVER_ART_LONG_SIDE = 300
+_MIN_COVER_ART_SHORT_SIDE = 150
 
 
 def _filename_from_url(url: str, fallback_stem: str) -> str:
@@ -81,7 +84,8 @@ def fetch_external_cover_art(event_id: str, image_url: str, uploader_id: str) ->
         logger.info("external_ingest_cover_art_unreadable", event_id=event_id, url=image_url)
         return
     width, height = dimensions
-    if width < _MIN_COVER_ART_WIDTH or height < _MIN_COVER_ART_HEIGHT:
+    short_side, long_side = sorted((width, height))
+    if long_side < _MIN_COVER_ART_LONG_SIDE or short_side < _MIN_COVER_ART_SHORT_SIDE:
         logger.info("external_ingest_cover_art_too_small", event_id=event_id, url=image_url, width=width, height=height)
         return
 

@@ -2,11 +2,13 @@
 
 import typing as t
 from datetime import timedelta
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
 from django.utils import timezone
+from PIL import Image
 
 from accounts.models import RevelUser
 from events.models import Event, Organization
@@ -31,6 +33,12 @@ def _ok_response(content: bytes) -> MagicMock:
     response.raise_for_status.side_effect = None
     response.content = content
     return response
+
+
+def _image_bytes(width: int, height: int) -> bytes:
+    buffer = BytesIO()
+    Image.new("RGB", (width, height), color="blue").save(buffer, format="JPEG", quality=85)
+    return buffer.getvalue()
 
 
 class TestFetchExternalCoverArt:
@@ -97,6 +105,29 @@ class TestFetchExternalCoverArt:
     def test_skips_when_image_is_too_small(self, draft_event: Event, user: RevelUser, png_bytes: bytes) -> None:
         """1x1 placeholders and small square logos (166x166 etc.) don't fit as a cover photo."""
         with patch("events.tasks.external_ingest.httpx.get", return_value=_ok_response(png_bytes)):
+            fetch_external_cover_art(str(draft_event.id), IMAGE_URL, str(user.id))
+
+        draft_event.refresh_from_db()
+        assert not draft_event.cover_art
+
+    def test_accepts_portrait_poster(self, draft_event: Event, user: RevelUser) -> None:
+        """A tall, narrow show flyer (common for BR events) is a valid cover, not a placeholder."""
+        with patch("events.tasks.external_ingest.httpx.get", return_value=_ok_response(_image_bytes(400, 900))):
+            fetch_external_cover_art(str(draft_event.id), IMAGE_URL, str(user.id))
+
+        draft_event.refresh_from_db()
+        assert draft_event.cover_art
+
+    def test_accepts_square_image(self, draft_event: Event, user: RevelUser) -> None:
+        with patch("events.tasks.external_ingest.httpx.get", return_value=_ok_response(_image_bytes(400, 400))):
+            fetch_external_cover_art(str(draft_event.id), IMAGE_URL, str(user.id))
+
+        draft_event.refresh_from_db()
+        assert draft_event.cover_art
+
+    def test_rejects_narrow_portrait_image(self, draft_event: Event, user: RevelUser) -> None:
+        """Even in portrait orientation, the short side must still clear the minimum."""
+        with patch("events.tasks.external_ingest.httpx.get", return_value=_ok_response(_image_bytes(100, 900))):
             fetch_external_cover_art(str(draft_event.id), IMAGE_URL, str(user.id))
 
         draft_event.refresh_from_db()
