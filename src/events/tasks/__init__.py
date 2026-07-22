@@ -13,6 +13,7 @@ from events.tasks.attendees import (
     send_guest_ticket_confirmation,
 )
 from events.tasks.exports import generate_attendee_export_task, generate_questionnaire_export_task
+from events.tasks.external_ingest import fetch_external_cover_art
 from events.tasks.invoicing import (
     calculate_referral_payouts,
     deliver_attendee_credit_note_task,
@@ -53,6 +54,7 @@ __all__ = [
     "deliver_attendee_invoice_task",
     "expire_subscriptions_past_grace",
     "expire_waitlist_offers_task",
+    "fetch_external_cover_art",
     "generate_attendee_credit_note_task",
     "generate_attendee_export_task",
     "generate_attendee_invoice_task",

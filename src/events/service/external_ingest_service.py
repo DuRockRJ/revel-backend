@@ -17,8 +17,9 @@ from django.utils import timezone
 
 from accounts.models import RevelUser
 from common.utils import get_or_create_with_race_protection
-from events.models import DEFAULT_TICKET_TIER_NAME, Event, Organization, TicketTier
+from events.models import DEFAULT_TICKET_TIER_NAME, Event, Organization, TicketTier, Venue
 from events.schema import EventIngestResultSchema, EventIngestSchema
+from events.tasks.external_ingest import fetch_external_cover_art
 
 SCRAPER_SYSTEM_USERNAME = "scraper-system@durockrj.com.br"
 UNCLASSIFIED_ORG_NAME = "Não classificado"
@@ -30,6 +31,12 @@ UNCLASSIFIED_ORG_NAME = "Não classificado"
 _BRAZIL_TZ = dt_timezone(timedelta(hours=-3))
 
 _PRICE_RE = re.compile(r"\d{1,3}(?:\.\d{3})*(?:,\d{2})?|\d+(?:,\d{2})?")
+
+# Platform slugs whose default `.capitalize()` reads badly as a tier name.
+_TIER_NAME_OVERRIDES = {
+    "clubedoingresso": "Clube do Ingresso",
+    "sympla_eventos": "Sympla",
+}
 
 
 def _parse_datetime(raw: str | None) -> datetime | None:
@@ -65,6 +72,14 @@ def _parse_price(raw: str) -> Decimal:
         return Decimal("0")
 
 
+def _tier_name_from_source(source: str) -> str:
+    """Human-friendly ticket tier name from the scraper source, e.g. 'sympla:drunkspubcg' -> 'Sympla'."""
+    platform = source.split(":", 1)[0].strip().lower()
+    if not platform:
+        return DEFAULT_TICKET_TIER_NAME
+    return _TIER_NAME_OVERRIDES.get(platform, platform.capitalize())
+
+
 def _build_address(item: EventIngestSchema) -> str:
     """Combine venue/address/city into one plain-text field.
 
@@ -94,6 +109,17 @@ def _resolve_organization(organizer: str) -> Organization:
         },
     )
     return organization
+
+
+def _resolve_default_venue(organization: Organization) -> Venue | None:
+    """Return the org's Venue if it has exactly one.
+
+    Treated as the default venue for its ingested events (e.g. a bar that
+    only ever hosts its own shows). Ambiguous (zero or several venues) ->
+    leave unset, don't guess.
+    """
+    venues = list(Venue.objects.filter(organization=organization)[:2])
+    return venues[0] if len(venues) == 1 else None
 
 
 def ingest_events(items: list[EventIngestSchema]) -> list[EventIngestResultSchema]:
@@ -126,12 +152,15 @@ def _ingest_one(item: EventIngestSchema) -> EventIngestResultSchema:
             existing.end = end
             existing.address = address or None
             existing.description = item.description or None
+            existing.venue = _resolve_default_venue(existing.organization)
             existing.save()
             event = existing
             action = "updated"
         else:
+            organization = _resolve_organization(item.organizer)
             event = Event.objects.create(
-                organization=_resolve_organization(item.organizer),
+                organization=organization,
+                venue=_resolve_default_venue(organization),
                 external_uid=item.uid,
                 name=item.title,
                 status=Event.EventStatus.DRAFT,
@@ -146,12 +175,24 @@ def _ingest_one(item: EventIngestSchema) -> EventIngestResultSchema:
 
         TicketTier.objects.update_or_create(
             event=event,
-            name=DEFAULT_TICKET_TIER_NAME,
+            payment_method=TicketTier.PaymentMethod.EXTERNAL,
             defaults={
-                "payment_method": TicketTier.PaymentMethod.EXTERNAL,
+                "name": _tier_name_from_source(item.source),
                 "external_ticket_url": item.url,
                 "price": _parse_price(item.price),
             },
         )
+
+        # Best-effort cover art, dispatched async so a slow/dead image host can't
+        # stall a bulk POST. Only when missing — avoids re-downloading and
+        # re-triggering thumbnail generation on every re-ingestion of an
+        # unchanged image. Deferred to on_commit: ATOMIC_REQUESTS wraps this
+        # whole request in a transaction, so a worker could otherwise pick the
+        # task up before the row is visible.
+        if item.image and not event.cover_art:
+            system_user_id = str(_get_system_user().id)
+            event_id = str(event.id)
+            image_url = item.image
+            transaction.on_commit(lambda: fetch_external_cover_art.delay(event_id, image_url, system_user_id))
 
     return EventIngestResultSchema(uid=item.uid, action=action, event_id=event.id)

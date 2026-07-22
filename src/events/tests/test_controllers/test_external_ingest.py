@@ -2,12 +2,14 @@
 
 import typing as t
 from decimal import Decimal
+from unittest.mock import ANY, patch
 
 import pytest
 from django.test import Client, override_settings
 from django.urls import reverse
 
-from events.models import Event, Organization, TicketTier
+from accounts.models import RevelUser
+from events.models import Event, Organization, TicketTier, Venue
 from events.service.external_ingest_service import SCRAPER_SYSTEM_USERNAME, UNCLASSIFIED_ORG_NAME
 
 pytestmark = pytest.mark.django_db
@@ -85,6 +87,47 @@ class TestExternalIngestEvents:
         assert tier.payment_method == TicketTier.PaymentMethod.EXTERNAL
         assert tier.external_ticket_url == "https://sympla.com.br/show-da-banda-x"
         assert tier.price == Decimal("80.00")
+        assert tier.name == "Sympla"
+
+    def test_tier_name_uses_platform_before_colon(self, client: Client) -> None:
+        _post(client, [_payload(uid="meaple-uid", source="meaple:orockvive")])
+
+        event = Event.objects.get(external_uid="meaple-uid")
+        tier = TicketTier.objects.get(event=event)
+        assert tier.name == "Meaple"
+
+    def test_tier_name_overrides_clubedoingresso(self, client: Client) -> None:
+        _post(client, [_payload(uid="cdi-uid", source="clubedoingresso")])
+
+        event = Event.objects.get(external_uid="cdi-uid")
+        tier = TicketTier.objects.get(event=event)
+        assert tier.name == "Clube do Ingresso"
+
+    def test_tier_name_overrides_sympla_eventos(self, client: Client) -> None:
+        _post(client, [_payload(uid="sympla-eventos-uid", source="sympla_eventos")])
+
+        event = Event.objects.get(external_uid="sympla-eventos-uid")
+        tier = TicketTier.objects.get(event=event)
+        assert tier.name == "Sympla"
+
+    def test_links_default_venue_when_organization_has_exactly_one(self, client: Client, user: RevelUser) -> None:
+        org = Organization.objects.create(name="Coordenadas Bar", owner=user)
+        venue = Venue.objects.create(organization=org, name="Coordenadas Bar")
+
+        _post(client, [_payload(uid="venue-uid", organizer="Coordenadas Bar")])
+
+        event = Event.objects.get(external_uid="venue-uid")
+        assert event.venue_id == venue.id
+
+    def test_does_not_link_venue_when_organization_has_multiple_venues(self, client: Client, user: RevelUser) -> None:
+        org = Organization.objects.create(name="Multi Venue Org", owner=user)
+        Venue.objects.create(organization=org, name="Palco A")
+        Venue.objects.create(organization=org, name="Palco B")
+
+        _post(client, [_payload(uid="multi-venue-uid", organizer="Multi Venue Org")])
+
+        event = Event.objects.get(external_uid="multi-venue-uid")
+        assert event.venue_id is None
 
     def test_creates_organization_for_new_organizer(self, client: Client) -> None:
         response = _post(client, [_payload(uid="organizer-uid", organizer="Central do Rock Produções")])
@@ -111,7 +154,9 @@ class TestExternalIngestEvents:
         assert event.name == "Título Atualizado"
         tier = TicketTier.objects.get(event=event)
         assert tier.price == Decimal("60.00")
+        assert tier.name == "Sympla"
         assert Event.objects.filter(external_uid="update-me").count() == 1
+        assert TicketTier.objects.filter(event=event).count() == 1
 
     def test_reingestion_skips_published_event(self, client: Client) -> None:
         _post(client, [_payload(uid="published-uid", title="Título Original")])
@@ -131,6 +176,24 @@ class TestExternalIngestEvents:
 
         event = Event.objects.get(external_uid="keep-org-uid")
         assert event.organization.name == "Produtora Confiável"
+
+    def test_dispatches_cover_art_task_when_image_present(
+        self, client: Client, django_capture_on_commit_callbacks: t.Any
+    ) -> None:
+        with patch("events.service.external_ingest_service.fetch_external_cover_art.delay") as mock_delay:
+            with django_capture_on_commit_callbacks(execute=True):
+                _post(client, [_payload(uid="img-uid", image="https://files.meaple.com.br/x.jpg")])
+
+        event = Event.objects.get(external_uid="img-uid")
+        mock_delay.assert_called_once_with(str(event.id), "https://files.meaple.com.br/x.jpg", ANY)
+
+    def test_does_not_dispatch_cover_art_task_when_no_image(
+        self, client: Client, django_capture_on_commit_callbacks: t.Any
+    ) -> None:
+        with patch("events.service.external_ingest_service.fetch_external_cover_art.delay") as mock_delay:
+            with django_capture_on_commit_callbacks(execute=True):
+                _post(client, [_payload(uid="no-img-uid", image="")])
+        mock_delay.assert_not_called()
 
     def test_missing_date_reports_error_without_failing_batch(self, client: Client) -> None:
         response = _post(
