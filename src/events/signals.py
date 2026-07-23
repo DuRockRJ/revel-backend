@@ -4,13 +4,16 @@ import typing as t
 
 import structlog
 from django.db import transaction
+from django.db.models import Q
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from accounts.models import RevelUser
 from common.models import SiteSettings
+from common.utils import get_or_create_with_race_protection
 from events.models import (
     Blacklist,
+    DeletedExternalEvent,
     Event,
     EventInvitation,
     EventRSVP,
@@ -556,3 +559,21 @@ def handle_waitlist_entry_deleted(sender: type[EventWaitList], instance: EventWa
     ).update(status=WaitlistOffer.WaitlistOfferStatus.REVOKED)
     if affected:
         enqueue_waitlist_processing(instance.event_id)
+
+
+@receiver(post_delete, sender=Event)
+def tombstone_deleted_external_event(sender: type[Event], instance: Event, **kwargs: t.Any) -> None:
+    """Remember a deleted event's ``external_uid`` so it isn't re-imported.
+
+    Fires for both single-instance and bulk (``QuerySet.delete()``) deletes,
+    unlike an overridden ``Event.delete()`` — the Django admin's "Delete
+    selected" action uses the bulk path. Events created outside external
+    ingestion have ``external_uid=None`` and are skipped.
+    """
+    if not instance.external_uid:
+        return
+    get_or_create_with_race_protection(
+        DeletedExternalEvent,
+        Q(external_uid=instance.external_uid),
+        {"external_uid": instance.external_uid},
+    )

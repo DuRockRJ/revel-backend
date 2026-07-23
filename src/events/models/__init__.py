@@ -3,6 +3,7 @@ from .attendee_invoice import AttendeeInvoice, AttendeeInvoiceCreditNote
 from .band import Band
 from .blacklist import Blacklist, WhitelistRequest
 from .bookmark import EventBookmark
+from .deleted_external_event import DeletedExternalEvent
 from .discount_code import DiscountCode
 from .event import (
     AttendeeVisibilityFlag,
@@ -133,4 +134,6 @@ __all__ = [
     "PlatformFeeInvoice",
     # Stripe webhooks
     "StripeWebhookEvent",
+    # External ingestion
+    "DeletedExternalEvent",
 ]

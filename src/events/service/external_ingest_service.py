@@ -17,7 +17,7 @@ from django.utils import timezone
 
 from accounts.models import RevelUser
 from common.utils import get_or_create_with_race_protection
-from events.models import DEFAULT_TICKET_TIER_NAME, Event, Organization, TicketTier, Venue
+from events.models import DEFAULT_TICKET_TIER_NAME, DeletedExternalEvent, Event, Organization, TicketTier, Venue
 from events.schema import EventIngestResultSchema, EventIngestSchema
 from events.tasks.external_ingest import fetch_external_cover_art
 
@@ -147,6 +147,9 @@ def _ingest_one(item: EventIngestSchema) -> EventIngestResultSchema:
     existing = Event.objects.filter(external_uid=item.uid).first()
     if existing and existing.status != Event.EventStatus.DRAFT:
         return EventIngestResultSchema(uid=item.uid, action="skipped", event_id=existing.id)
+
+    if existing is None and DeletedExternalEvent.objects.filter(external_uid=item.uid).exists():
+        return EventIngestResultSchema(uid=item.uid, action="skipped", detail="Event was deleted; not re-imported")
 
     address = _build_address(item)
     action: t.Literal["created", "updated"]

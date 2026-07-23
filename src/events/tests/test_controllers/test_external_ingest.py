@@ -221,6 +221,15 @@ class TestExternalIngestEvents:
                 _post(client, [_payload(uid="no-img-uid", image="")])
         mock_delay.assert_not_called()
 
+    def test_deleted_event_is_not_reimported(self, client: Client) -> None:
+        _post(client, [_payload(uid="deleted-uid")])
+        Event.objects.get(external_uid="deleted-uid").delete()
+
+        response = _post(client, [_payload(uid="deleted-uid")])
+
+        assert response.json()["results"][0]["action"] == "skipped"
+        assert not Event.objects.filter(external_uid="deleted-uid").exists()
+
     def test_missing_date_reports_error_without_failing_batch(self, client: Client) -> None:
         response = _post(
             client,
