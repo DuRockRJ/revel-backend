@@ -9,7 +9,7 @@ from django.test import Client, override_settings
 from django.urls import reverse
 
 from accounts.models import RevelUser
-from events.models import Event, Organization, TicketTier, Venue
+from events.models import Event, Organization, OrganizerAlias, TicketTier, Venue
 from events.service.external_ingest_service import SCRAPER_SYSTEM_USERNAME, UNCLASSIFIED_ORG_NAME
 
 pytestmark = pytest.mark.django_db
@@ -157,6 +157,37 @@ class TestExternalIngestEvents:
 
         org_count = Organization.objects.filter(name="Mesma Produtora").count()
         assert org_count == 1
+
+    def test_creating_organization_records_an_alias(self, client: Client) -> None:
+        _post(client, [_payload(uid="alias-uid", organizer="FABRICIO MOTTA")])
+
+        event = Event.objects.get(external_uid="alias-uid")
+        alias = OrganizerAlias.objects.get(raw_name__iexact="FABRICIO MOTTA")
+        assert alias.organization_id == event.organization_id
+
+    def test_renaming_organization_does_not_spawn_duplicate_on_next_event(self, client: Client) -> None:
+        """Renaming the Organization must not orphan the raw scraper text that created
+        it — the alias recorded on first sight keeps resolving new events to it."""
+        _post(client, [_payload(uid="uid-1", organizer="FABRICIO MOTTA")])
+        org = Event.objects.get(external_uid="uid-1").organization
+        org.name = "Drunks Pub"
+        org.save()
+
+        _post(client, [_payload(uid="uid-2", organizer="FABRICIO MOTTA")])
+
+        event_2 = Event.objects.get(external_uid="uid-2")
+        assert event_2.organization_id == org.id
+        assert Organization.objects.filter(name__iexact="FABRICIO MOTTA").count() == 0
+
+    def test_manually_added_alias_takes_priority_over_name_match(self, client: Client, user: RevelUser) -> None:
+        org = Organization.objects.create(name="Casa Real", owner=user)
+        OrganizerAlias.objects.create(raw_name="Nome Torto Da Raspagem", organization=org)
+
+        _post(client, [_payload(uid="manual-alias-uid", organizer="Nome Torto Da Raspagem")])
+
+        event = Event.objects.get(external_uid="manual-alias-uid")
+        assert event.organization_id == org.id
+        assert not Organization.objects.filter(name="Nome Torto Da Raspagem").exists()
 
     def test_reingestion_updates_draft_event(self, client: Client) -> None:
         _post(client, [_payload(uid="update-me", title="Título Original", price="R$ 50,00")])

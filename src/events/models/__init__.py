@@ -36,6 +36,7 @@ from .organization import (
     PermissionMap,
     PermissionsSchema,
 )
+from .organizer_alias import OrganizerAlias
 from .potluck import PotluckItem
 from .preferences import (
     BaseUserPreferences,
@@ -136,4 +137,5 @@ __all__ = [
     "StripeWebhookEvent",
     # External ingestion
     "DeletedExternalEvent",
+    "OrganizerAlias",
 ]

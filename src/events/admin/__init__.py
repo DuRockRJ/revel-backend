@@ -42,6 +42,7 @@ from events.admin.organization import (
     OrganizationStaffAdmin,
     OrganizationTokenAdmin,
 )
+from events.admin.organizer_alias import OrganizerAliasAdmin
 from events.admin.preferences import (
     AttendeeVisibilityFlagAdmin,
     GeneralUserPreferencesAdmin,
@@ -121,6 +122,8 @@ __all__ = [
     "DiscountCodeAdmin",
     # Reserved slugs
     "ReservedSlugTokenAdmin",
+    # Organizer aliases
+    "OrganizerAliasAdmin",
     # Subscriptions
     "MembershipPaymentAdmin",
     "MembershipSubscriptionAdmin",

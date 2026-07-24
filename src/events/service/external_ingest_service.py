@@ -17,7 +17,15 @@ from django.utils import timezone
 
 from accounts.models import RevelUser
 from common.utils import get_or_create_with_race_protection
-from events.models import DEFAULT_TICKET_TIER_NAME, DeletedExternalEvent, Event, Organization, TicketTier, Venue
+from events.models import (
+    DEFAULT_TICKET_TIER_NAME,
+    DeletedExternalEvent,
+    Event,
+    Organization,
+    OrganizerAlias,
+    TicketTier,
+    Venue,
+)
 from events.schema import EventIngestResultSchema, EventIngestSchema
 from events.tasks.external_ingest import fetch_external_cover_art
 
@@ -106,9 +114,22 @@ def _get_system_user() -> RevelUser:
 
 
 def _resolve_organization(organizer: str) -> Organization:
+    """Resolve the organizer's raw text to an Organization, preferring a known alias.
+
+    Renaming an Organization would otherwise orphan the raw scraper text that
+    originally created it: the next event from that organizer would fail the
+    name lookup and spawn a duplicate. ``OrganizerAlias`` decouples the two —
+    checked first, and recorded automatically the first time a raw name
+    resolves via the name-matching fallback below.
+    """
     name = organizer.strip()
     if not name:
         return Organization.objects.get(name=UNCLASSIFIED_ORG_NAME)
+
+    alias = OrganizerAlias.objects.filter(raw_name__iexact=name).select_related("organization").first()
+    if alias:
+        return alias.organization
+
     organization, _created = get_or_create_with_race_protection(
         Organization,
         Q(name__iexact=name),
@@ -117,6 +138,11 @@ def _resolve_organization(organizer: str) -> Organization:
             "owner": _get_system_user(),
             "visibility": Organization.Visibility.STAFF_ONLY,
         },
+    )
+    get_or_create_with_race_protection(
+        OrganizerAlias,
+        Q(raw_name__iexact=name),
+        {"raw_name": name, "organization": organization},
     )
     return organization
 
