@@ -390,8 +390,7 @@ def test_build_attendee_visibility_flags_takes_per_event_advisory_lock(
     """
     attendee1 = revel_user_factory()
     attendee2 = revel_user_factory()
-    tier = event.ticket_tiers.first()
-    assert tier is not None
+    tier = TicketTier.objects.create(event=event, name="General")
     Ticket.objects.create(
         guest_name="Test Guest", event=event, user=attendee1, tier=tier, status=Ticket.TicketStatus.ACTIVE
     )
