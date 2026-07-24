@@ -5,7 +5,6 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
-from django.core.files.base import ContentFile
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
