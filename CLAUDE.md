@@ -381,3 +381,14 @@ Non-negotiable, project-specific:
 - **Always discuss the approach before writing code for non-trivial changes** (Principle #1).
 - **UV, never pip.** **Models never import services.**
 - **Avoid circular dependencies.**
+- **This is a branded fork (DuRock RJ), not upstream Revel/Let's Revel.** An `upstream`
+  remote (`letsrevel/revel-backend`) exists for pulling bugfixes/security patches only.
+  When syncing from it (cherry-pick or otherwise), **never bring in changes that touch
+  branding** (email/PDF templates, logos, colors, sender names — e.g. the "Let's Revel"
+  rebrand) **or that would overwrite/conflict with the `pt` locale** (`src/locale/pt/`).
+  Pure backend logic fixes and dependency security bumps are fine; anything customer-facing
+  in English or upstream-branded must be skipped or adapted, never merged wholesale. Any new
+  user-facing string a cherry-pick introduces must get a `pt` translation before it ships
+  (see [i18n](#i18n)) — never leave it falling back to English. If a cherry-picked fix's own
+  tests assume an upstream-only feature this fork never adopted, trim those specific
+  assertions rather than pulling in the feature.
