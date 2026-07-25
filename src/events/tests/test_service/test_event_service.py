@@ -427,6 +427,25 @@ class TestDuplicateEvent:
         assert new_event.max_attendees == public_event.max_attendees
         assert new_event.status == Event.EventStatus.DRAFT
 
+    def test_duplicate_event_clears_external_uid(self, organization: Organization) -> None:
+        """external_uid must not be copied: it's unique, so duplicating an externally-ingested
+        event (e.g. from rockfeed-rj) would otherwise fail with a ValidationError."""
+        template = Event.objects.create(
+            organization=organization,
+            name="Externally Ingested Event",
+            start=timezone.now() + timedelta(days=1),
+            requires_ticket=False,
+            external_uid="rockfeed-rj:some-source:abc123",
+        )
+
+        new_event = event_service.duplicate_event(
+            template_event=template,
+            new_name="Duplicated Event",
+            new_start=template.start + timedelta(days=7),
+        )
+
+        assert new_event.external_uid is None
+
     def test_duplicate_event_date_shifting(self, organization: Organization) -> None:
         """Test that date fields are shifted correctly."""
         original_start = timezone.now()

@@ -7,11 +7,14 @@ from django.db import transaction
 
 from events.models import Event, PotluckItem, TicketTier
 
-# Fields that are NOT copied from the template. These fall into three groups:
+# Fields that are NOT copied from the template. These fall into four groups:
 # 1. Primary key / timestamps — auto-managed by Django.
 # 2. Slug — regenerated via SlugFromNameMixin based on the new name.
 # 3. Per-occurrence state that must never leak from template to occurrence
-#    (is_template, is_modified, attendee_count, auto-generated thumbnails).
+#    (is_template, is_modified, attendee_count, auto-generated thumbnails,
+#    external_uid — the duplicate isn't the same external-ingested row, and
+#    external_uid is unique, so copying it verbatim raises a ValidationError
+#    and the duplicate silently fails).
 # 4. Fields explicitly overridden or shifted by this function
 #    (name, status, start, end, occurrence_index, date windows).
 _EXCLUDED_FROM_COPY: frozenset[str] = frozenset(
@@ -29,6 +32,7 @@ _EXCLUDED_FROM_COPY: frozenset[str] = frozenset(
         "attendee_count",
         "is_template",
         "is_modified",
+        "external_uid",
         # explicit overrides
         "name",
         "status",
