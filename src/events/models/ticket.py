@@ -248,6 +248,7 @@ class TicketTier(TimeStampedModel, VisibilityMixin):
         AT_THE_DOOR = "at_the_door", "At The Door"
         FREE = "free", "Free"
         EXTERNAL = "external", "External"
+        PIX = "pix", "Pix"
 
     class PriceType(models.TextChoices):
         FIXED = "fixed", "Fixed Price"
@@ -653,8 +654,17 @@ class Ticket(TimeStampedModel):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Amount paid per ticket for PWYC offline/at_the_door purchases. "
+        help_text="Amount paid per ticket for PWYC offline/at_the_door/Pix purchases. "
         "Null for online payments (stored in Payment.amount) or fixed-price tiers (use tier.price).",
+    )
+    pix_reference = models.CharField(
+        max_length=25,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Short reference embedded in the Pix QR code's txid field, shared by every "
+        "ticket in the same Pix batch checkout. Lets the organizer match an incoming Pix "
+        "payment (by its txid) back to the buyer/event when confirming payment manually.",
     )
 
     # Venue/seating (denormalized for fast access, validated for consistency)
