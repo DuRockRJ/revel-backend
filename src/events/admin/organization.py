@@ -111,6 +111,7 @@ class OrganizationAdmin(ModelAdmin, UserLinkMixin):  # type: ignore[misc]
                     "billing_email",
                     "platform_fee_percent",
                     "platform_fee_fixed",
+                    "pix_key",
                 ],
             },
         ),

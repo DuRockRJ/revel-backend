@@ -54,6 +54,19 @@ def test_update_response_uses_admin_detail_schema(
     assert "revenue_report_cadence" in data
 
 
+def test_update_organization_pix_key(organization_owner_client: Client, organization: Organization) -> None:
+    """The Pix key is writable and echoed back via PUT."""
+    url = reverse("api:edit_organization", kwargs={"slug": organization.slug})
+    payload = {"visibility": "public", "pix_key": "org@example.com"}
+
+    response = organization_owner_client.put(url, data=orjson.dumps(payload), content_type="application/json")
+
+    assert response.status_code == 200
+    assert response.json()["pix_key"] == "org@example.com"
+    organization.refresh_from_db()
+    assert organization.pix_key == "org@example.com"
+
+
 def test_upload_organization_logo_by_owner(
     organization_owner_client: Client, organization: Organization, png_file: SimpleUploadedFile, png_bytes: bytes
 ) -> None:

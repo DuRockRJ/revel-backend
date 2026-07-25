@@ -392,6 +392,17 @@ class Organization(
         ),
     )
 
+    # Pix payments (DuRock RJ customization)
+    pix_key = models.CharField(
+        max_length=140,
+        blank=True,
+        default="",
+        help_text=(
+            "Pix key (CPF, CNPJ, email, phone, or random/EVP key) receiving payments for this"
+            " organization's Pix ticket tiers. Blank disables the Pix payment method."
+        ),
+    )
+
     # Attendee invoicing
     invoicing_mode = models.CharField(
         max_length=10,

@@ -116,6 +116,28 @@ def test_get_organization_visibility(
     assert member_client.get(url).status_code == 200
 
 
+def test_get_organization_pix_configured_reflects_pix_key_without_exposing_it(
+    client: Client, organization: Organization
+) -> None:
+    """pix_configured mirrors is_stripe_connected: a public boolean flag, never the raw key."""
+    organization.visibility = "public"
+    organization.save()
+    url = reverse("api:get_organization", kwargs={"slug": organization.slug})
+
+    response = client.get(url)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["pix_configured"] is False
+    assert "pix_key" not in data
+
+    organization.pix_key = "org@example.com"
+    organization.save()
+
+    data = client.get(url).json()
+    assert data["pix_configured"] is True
+    assert "pix_key" not in data
+
+
 def test_get_organization_by_privileged_users(
     organization_owner_client: Client, organization_staff_client: Client, organization: Organization
 ) -> None:

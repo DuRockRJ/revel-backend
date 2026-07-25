@@ -57,6 +57,7 @@ class OrganizationEditSchema(CityEditMixin, SocialMediaSchemaEditMixin):
     accept_membership_requests: bool = False
     contact_method: Organization.ContactMethod = Organization.ContactMethod.NONE
     revenue_report_cadence: Organization.RevenueReportCadence = Organization.RevenueReportCadence.NONE
+    pix_key: t.Annotated[str, StringConstraints(strip_whitespace=True, max_length=140)] = ""
 
 
 class OrganizationBillingInfoSchema(Schema):
@@ -105,6 +106,7 @@ class MinimalOrganizationSchema(LogoCoverArtThumbnailMixin):
     cover_art: str | None = None
     visibility: Organization.Visibility
     is_stripe_connected: bool
+    pix_configured: bool
     platform_fee_percent: Decimal | None = Field(None, ge=0, le=100)
     accept_membership_requests: bool
     contact_method: Organization.ContactMethod
@@ -114,6 +116,11 @@ class MinimalOrganizationSchema(LogoCoverArtThumbnailMixin):
     def resolve_contact_email(obj: Organization, context: t.Any) -> str | None:
         """Expose contact_email only when the org opted into EMAIL mode."""
         return _resolve_public_contact_email(obj)
+
+    @staticmethod
+    def resolve_pix_configured(obj: Organization) -> bool:
+        """Whether a Pix key is set, without exposing the key itself (mirrors is_stripe_connected)."""
+        return bool(obj.pix_key)
 
 
 class OrganizationInListSchema(CityRetrieveMixin, TaggableSchemaMixin, LogoCoverArtThumbnailMixin):
@@ -127,6 +134,7 @@ class OrganizationInListSchema(CityRetrieveMixin, TaggableSchemaMixin, LogoCover
     cover_art: str | None = None
     visibility: Organization.Visibility
     is_stripe_connected: bool
+    pix_configured: bool
     platform_fee_percent: Decimal | None = Field(None, ge=0, le=100)
     accept_membership_requests: bool
     contact_method: Organization.ContactMethod
@@ -138,6 +146,11 @@ class OrganizationInListSchema(CityRetrieveMixin, TaggableSchemaMixin, LogoCover
     def resolve_contact_email(obj: Organization, context: t.Any) -> str | None:
         """Expose contact_email only when the org opted into EMAIL mode."""
         return _resolve_public_contact_email(obj)
+
+    @staticmethod
+    def resolve_pix_configured(obj: Organization) -> bool:
+        """Whether a Pix key is set, without exposing the key itself (mirrors is_stripe_connected)."""
+        return bool(obj.pix_key)
 
 
 class OrganizationRetrieveSchema(
@@ -151,6 +164,7 @@ class OrganizationRetrieveSchema(
     cover_art: str | None = None
     visibility: Organization.Visibility
     is_stripe_connected: bool
+    pix_configured: bool
     platform_fee_percent: Decimal | None = Field(None, ge=0, le=100)
     accept_membership_requests: bool
     contact_method: Organization.ContactMethod
@@ -160,6 +174,11 @@ class OrganizationRetrieveSchema(
     def resolve_contact_email(obj: Organization, context: t.Any) -> str | None:
         """Expose contact_email only when the org opted into EMAIL mode."""
         return _resolve_public_contact_email(obj)
+
+    @staticmethod
+    def resolve_pix_configured(obj: Organization) -> bool:
+        """Whether a Pix key is set, without exposing the key itself (mirrors is_stripe_connected)."""
+        return bool(obj.pix_key)
 
 
 class OrganizationAdminDetailSchema(
@@ -196,6 +215,8 @@ class OrganizationAdminDetailSchema(
     billing_email: str
     invoicing_mode: OrganizationModel.InvoicingMode
     revenue_report_cadence: OrganizationModel.RevenueReportCadence
+    # Pix payments
+    pix_key: str
 
 
 class OrganizationPermissionsSchema(Schema):
