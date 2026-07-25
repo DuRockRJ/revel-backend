@@ -1193,6 +1193,9 @@ msgstr ""
 msgid "Unknown payment method."
 msgstr "Moyen de paiement inconnu."
 
+msgid "This organization has not configured a Pix key for this tier."
+msgstr "Cette organisation n'a pas configuré de clé Pix pour cette catégorie."
+
 msgid "At least one identifier (email, telegram, phone) or name is required."
 msgstr ""
 "Au moins un identifiant (e-mail, Telegram, téléphone) ou un nom est requis."

@@ -164,7 +164,7 @@ class EventAdminTicketsController(EventAdminBaseController):
 
         Supports filtering by:
         - status: Filter by ticket status (PENDING, ACTIVE, CANCELLED, CHECKED_IN)
-        - tier__payment_method: Filter by payment method (ONLINE, OFFLINE, AT_THE_DOOR, FREE)
+        - tier__payment_method: Filter by payment method (ONLINE, OFFLINE, AT_THE_DOOR, FREE, PIX)
 
         Ordering (prefix with '-' for descending):
         - created_at: Purchase date (default: -created_at, newest first)
@@ -204,7 +204,7 @@ class EventAdminTicketsController(EventAdminBaseController):
         ticket_id: UUID,
         payload: t.Annotated[schema.ConfirmPaymentSchema | None, Body(None)] = None,
     ) -> models.Ticket:
-        """Confirm payment for a pending offline ticket and activate it."""
+        """Confirm payment for a pending offline/Pix ticket and activate it."""
         event = self.get_one(event_id)
         ticket = get_object_or_404(
             models.Ticket.objects.select_related("tier"),
@@ -214,6 +214,7 @@ class EventAdminTicketsController(EventAdminBaseController):
             tier__payment_method__in=[
                 models.TicketTier.PaymentMethod.OFFLINE,
                 models.TicketTier.PaymentMethod.AT_THE_DOOR,
+                models.TicketTier.PaymentMethod.PIX,
             ],
         )
         return ticket_service.confirm_ticket_payment(ticket, price_paid=payload.price_paid if payload else None)
@@ -226,7 +227,7 @@ class EventAdminTicketsController(EventAdminBaseController):
     def unconfirm_ticket_payment(self, event_id: UUID, ticket_id: UUID) -> models.Ticket:
         """Revert a confirmed ticket back to pending status.
 
-        Only applies to OFFLINE payment method. AT_THE_DOOR tickets are always
+        Only applies to OFFLINE and Pix payment methods. AT_THE_DOOR tickets are always
         ACTIVE (commitment to attend) and should not be reverted to PENDING.
         """
         event = self.get_one(event_id)
@@ -235,7 +236,10 @@ class EventAdminTicketsController(EventAdminBaseController):
             pk=ticket_id,
             event=event,
             status=models.Ticket.TicketStatus.ACTIVE,
-            tier__payment_method=models.TicketTier.PaymentMethod.OFFLINE,
+            tier__payment_method__in=[
+                models.TicketTier.PaymentMethod.OFFLINE,
+                models.TicketTier.PaymentMethod.PIX,
+            ],
         )
         return ticket_service.unconfirm_ticket_payment(ticket)
 
@@ -250,7 +254,7 @@ class EventAdminTicketsController(EventAdminBaseController):
         ticket_id: UUID,
         payload: t.Annotated[schema.AdminRefundTicketSchema | None, Body(None)] = None,
     ) -> models.Ticket:
-        """Mark a manual offline/at-the-door ticket as refunded and cancel it.
+        """Mark a manual offline/at-the-door/Pix ticket as refunded and cancel it.
 
         This endpoint is for manually-collected payments only. Online (Stripe) tickets
         are refunded via the Stripe Dashboard and handled automatically by webhooks.
@@ -263,6 +267,7 @@ class EventAdminTicketsController(EventAdminBaseController):
             tier__payment_method__in=[
                 models.TicketTier.PaymentMethod.OFFLINE,
                 models.TicketTier.PaymentMethod.AT_THE_DOOR,
+                models.TicketTier.PaymentMethod.PIX,
             ],
         )
         return ticket_service.mark_offline_ticket_refunded(
@@ -283,9 +288,9 @@ class EventAdminTicketsController(EventAdminBaseController):
         ticket_id: UUID,
         payload: t.Annotated[schema.AdminCancelTicketSchema | None, Body(None)] = None,
     ) -> models.Ticket:
-        """Cancel an offline/at-the-door ticket and record organizer audit fields.
+        """Cancel an offline/at-the-door/Pix ticket and record organizer audit fields.
 
-        This endpoint is for offline/at-the-door tickets only.
+        This endpoint is for offline/at-the-door/Pix tickets only.
         Online tickets (Stripe) should be refunded via the Stripe Dashboard.
         """
         event = self.get_one(event_id)
@@ -296,6 +301,7 @@ class EventAdminTicketsController(EventAdminBaseController):
             tier__payment_method__in=[
                 models.TicketTier.PaymentMethod.OFFLINE,
                 models.TicketTier.PaymentMethod.AT_THE_DOOR,
+                models.TicketTier.PaymentMethod.PIX,
             ],
         )
         return ticket_service.cancel_offline_ticket(

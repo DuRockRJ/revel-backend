@@ -736,11 +736,12 @@ def cancel_offline_ticket(
     return Ticket.objects.full().get(pk=locked_ticket.pk)
 
 
-# Single source of truth for when an offline/at-the-door ticket counts as paid. The per-row
+# Single source of truth for when an offline/at-the-door/Pix ticket counts as paid. The per-row
 # predicate and the revenue Q both derive from this so they cannot drift.
 OFFLINE_PAID_STATUSES: dict[str, tuple[Ticket.TicketStatus, ...]] = {
     TicketTier.PaymentMethod.OFFLINE: (Ticket.TicketStatus.ACTIVE, Ticket.TicketStatus.CHECKED_IN),
     TicketTier.PaymentMethod.AT_THE_DOOR: (Ticket.TicketStatus.CHECKED_IN,),
+    TicketTier.PaymentMethod.PIX: (Ticket.TicketStatus.ACTIVE, Ticket.TicketStatus.CHECKED_IN),
 }
 
 

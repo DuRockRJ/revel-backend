@@ -280,6 +280,7 @@ def _offline_tickets(scope: ReportScope) -> QuerySet[Ticket]:
         tier__payment_method__in=[
             TicketTier.PaymentMethod.OFFLINE,
             TicketTier.PaymentMethod.AT_THE_DOOR,
+            TicketTier.PaymentMethod.PIX,
         ],
     )
     if scope.event_id is not None:

@@ -1053,6 +1053,9 @@ msgstr ""
 msgid "This tier is sold on an external platform; use its external link."
 msgstr "Este nível é vendido em uma plataforma externa; use o link externo."
 
+msgid "This organization has not configured a Pix key for this tier."
+msgstr "Esta organização não configurou uma chave Pix para este nível."
+
 msgid "Unknown payment method."
 msgstr ""
 
