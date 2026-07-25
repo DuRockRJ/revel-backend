@@ -36,16 +36,14 @@
             </div>
             {% endif %}
 
+            {% if context.registration_opens_at %}
             <div class="card">
-                {% if context.registration_opens_at %}
                 <p>🎫 {% trans "Registration opens:" %} <strong>{{ context.registration_opens_at }}</strong></p>
-                {% else %}
-                <p>🎫 <strong>{% trans "Registration is now open!" %}</strong></p>
-                {% endif %}
             </div>
+            {% endif %}
 
             <center>
-                <a href="{{ context.event_url }}" class="button">{% trans "View Event & Register" %}</a>
+                <a href="{{ context.event_url }}" class="button">{% trans "View Event" %}</a>
             </center>
         </div>
         {% include "notifications/email/_footer.html" %}
