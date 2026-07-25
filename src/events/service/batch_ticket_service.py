@@ -1,6 +1,8 @@
 """Service for batch ticket purchases with seat selection support."""
 
+import base64
 import copy
+import secrets
 import typing as t
 from decimal import Decimal
 
@@ -15,6 +17,7 @@ from events.models import Event, EventInvitation, OrganizationMember, Ticket, Ti
 from events.models.discount_code import DiscountCode
 from events.schema import TicketPurchaseItem
 from events.tasks import build_attendee_visibility_flags
+from events.utils.pix import build_pix_payload, generate_pix_qr_code_png
 from notifications.signals.ticket import send_batch_ticket_created_notifications
 from notifications.signals.waitlist import remove_user_from_waitlist
 
@@ -511,6 +514,8 @@ class BatchTicketService:
                 return self._online_checkout(items, seats, locked_tier, price_override, billing_info)
             case TicketTier.PaymentMethod.OFFLINE:
                 return self._offline_checkout(items, seats, locked_tier, price_override)
+            case TicketTier.PaymentMethod.PIX:
+                return self._pix_checkout(items, seats, locked_tier, price_override)
             case TicketTier.PaymentMethod.AT_THE_DOOR:
                 return self._at_the_door_checkout(items, seats, locked_tier, price_override)
             case TicketTier.PaymentMethod.FREE:
@@ -691,6 +696,51 @@ class BatchTicketService:
 
         transaction.on_commit(on_commit)
 
+    def _pix_checkout(
+        self,
+        items: list[TicketPurchaseItem],
+        seats: list[VenueSeat | None],
+        locked_tier: TicketTier,
+        price_override: Decimal | None = None,
+    ) -> list[Ticket]:
+        """Handle Pix checkout for batch tickets.
+
+        Creates PENDING tickets sharing one ``pix_reference`` — the id embedded in the Pix
+        QR code's txid field. There is no PSP/webhook involved (it's a static QR pointing at
+        the organization's own Pix key), so payment confirmation is always manual: the
+        organizer sees the payment land in their account and confirms it the same way as an
+        OFFLINE ticket (see ``ticket_service.confirm_ticket_payment``).
+
+        Args:
+            items: List of ticket purchase items.
+            seats: List of seats corresponding to items.
+            locked_tier: The locked tier.
+            price_override: Price override for PWYC tiers.
+
+        Returns:
+            List of created PENDING tickets, sharing a common ``pix_reference``.
+
+        Raises:
+            HttpError: If the organization has no Pix key configured.
+        """
+        if not self.event.organization.pix_key:
+            raise HttpError(400, str(_("This organization has not configured a Pix key for this tier.")))
+
+        tickets = self._create_tickets(items, seats, Ticket.TicketStatus.PENDING, price_paid=price_override)
+
+        reference = secrets.token_hex(4).upper()
+        for ticket in tickets:
+            ticket.pix_reference = reference
+        Ticket.objects.bulk_update(tickets, ["pix_reference"])
+
+        # Update quantity sold
+        TicketTier.objects.filter(pk=locked_tier.pk).update(quantity_sold=F("quantity_sold") + len(items))
+
+        # Trigger side effects that bulk_create doesn't handle
+        self._trigger_bulk_create_side_effects(tickets)
+
+        return tickets
+
     def _offline_checkout(
         self,
         items: list[TicketPurchaseItem],
@@ -779,3 +829,34 @@ class BatchTicketService:
         self._trigger_bulk_create_side_effects(tickets)
 
         return tickets
+
+
+def build_pix_checkout_response_fields(tickets: list[Ticket]) -> tuple[str, str]:
+    """Build the Pix payload/QR code for a just-created batch of Pix tickets.
+
+    Called from the controller after ``create_batch`` returns, rather than threaded through
+    its ``list[Ticket] | str`` return value — the payload is fully derivable from the tickets
+    (all sharing one ``pix_reference``) plus their tier/organization, so there's no need to
+    widen that signature for this one payment method.
+
+    Args:
+        tickets: The tickets just created by ``_pix_checkout`` (all sharing one tier/organization
+            and ``pix_reference``).
+
+    Returns:
+        Tuple of (payload string, QR code as a ``data:image/png;base64,...`` URI).
+    """
+    organization = tickets[0].tier.event.organization
+    total_amount = sum((t.price_paid if t.price_paid is not None else t.tier.price for t in tickets), Decimal("0"))
+
+    payload = build_pix_payload(
+        pix_key=organization.pix_key,
+        merchant_name=organization.billing_name or organization.name,
+        merchant_city=organization.city.name if organization.city else "RIO DE JANEIRO",
+        txid=tickets[0].pix_reference,
+        amount=total_amount,
+    )
+    qr_png = generate_pix_qr_code_png(payload)
+    qr_data_uri = f"data:image/png;base64,{base64.b64encode(qr_png).decode('utf-8')}"
+
+    return payload, qr_data_uri

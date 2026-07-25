@@ -326,7 +326,7 @@ def confirm_guest_action(token: str) -> schema.EventRSVPSchema | schema.BatchChe
     Raises:
         HttpError: If token is invalid, expired, already used, or eligibility checks fail
     """
-    from events.service.batch_ticket_service import BatchTicketService
+    from events.service.batch_ticket_service import BatchTicketService, build_pix_checkout_response_fields
 
     # Decode token using discriminated union
     payload = validate_and_decode_guest_token(token)
@@ -389,10 +389,16 @@ def confirm_guest_action(token: str) -> schema.EventRSVPSchema | schema.BatchChe
 
         # Should always return tickets for non-online payment (what email confirmation is used for)
         if isinstance(result, list):
+            pix_payload, pix_qr_code_data_uri = None, None
+            if result and result[0].tier.payment_method == models.TicketTier.PaymentMethod.PIX:
+                pix_payload, pix_qr_code_data_uri = build_pix_checkout_response_fields(result)
+
             # Always return BatchCheckoutResponse for consistency
             return schema.BatchCheckoutResponse(
                 checkout_url=None,
                 tickets=[schema.UserTicketSchema.from_orm(t) for t in result],
+                pix_payload=pix_payload,
+                pix_qr_code_data_uri=pix_qr_code_data_uri,
             )
 
         raise HttpError(500, str(_("Unexpected response from ticket creation")))

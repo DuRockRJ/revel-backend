@@ -226,6 +226,7 @@ class AdminTicketSchema(ModelSchema):
             "price_paid",
             "discount_amount",
             "offline_refund_amount",
+            "pix_reference",
         ]
 
     @staticmethod
@@ -697,8 +698,10 @@ class BatchCheckoutResponse(Schema):
 
     checkout_url: str | None = Field(None, description="Stripe checkout URL (for online payment)")
     tickets: list[UserTicketSchema] = Field(
-        default_factory=list, description="Created tickets (for free/offline payments)"
+        default_factory=list, description="Created tickets (for free/offline/Pix payments)"
     )
+    pix_payload: str | None = Field(default=None, description="Pix 'Copia e Cola' payload string")
+    pix_qr_code_data_uri: str | None = Field(default=None, description="Pix QR code image as a data: URI")
 
 
 # ---- Guest User Schemas ----

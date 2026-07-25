@@ -16,7 +16,7 @@ from common.throttling import WriteThrottle
 from events import models, schema
 from events.controllers.permissions import CanPurchaseTicket
 from events.service import discount_code_service, ticket_service
-from events.service.batch_ticket_service import BatchTicketService
+from events.service.batch_ticket_service import BatchTicketService, build_pix_checkout_response_fields
 from events.service.event_manager import EventManager, EventUserEligibility
 
 from .base import EventPublicBaseController
@@ -25,6 +25,27 @@ from .base import EventPublicBaseController
 @api_controller("/events", auth=OptionalAuth(), tags=["Events"])
 class EventPublicTicketsController(EventPublicBaseController):
     """Handles ticket tiers and authenticated checkout operations."""
+
+    @staticmethod
+    def _build_checkout_response(result: "list[models.Ticket] | str") -> schema.BatchCheckoutResponse:
+        """Turn a ``BatchTicketService.create_batch`` result into the API response.
+
+        Adds the Pix payload/QR code when the batch was paid via Pix (all returned tickets
+        share one tier/payment method, so checking the first is enough).
+        """
+        if isinstance(result, str):
+            return schema.BatchCheckoutResponse(checkout_url=result, tickets=[])
+
+        pix_payload, pix_qr_code_data_uri = None, None
+        if result and result[0].tier.payment_method == models.TicketTier.PaymentMethod.PIX:
+            pix_payload, pix_qr_code_data_uri = build_pix_checkout_response_fields(result)
+
+        return schema.BatchCheckoutResponse(
+            checkout_url=None,
+            tickets=[schema.UserTicketSchema.from_orm(t) for t in result],
+            pix_payload=pix_payload,
+            pix_qr_code_data_uri=pix_qr_code_data_uri,
+        )
 
     @route.get(
         "/{uuid:event_id}/tickets/tiers",
@@ -155,12 +176,7 @@ class EventPublicTicketsController(EventPublicBaseController):
         service = BatchTicketService(event, tier, user, discount_code=dc)
         result = service.create_batch(payload.tickets, price_override=price_override, billing_info=payload.billing_info)
 
-        if isinstance(result, str):
-            return schema.BatchCheckoutResponse(checkout_url=result, tickets=[])
-        return schema.BatchCheckoutResponse(
-            checkout_url=None,
-            tickets=[schema.UserTicketSchema.from_orm(t) for t in result],
-        )
+        return self._build_checkout_response(result)
 
     @route.post(
         "/{uuid:event_id}/tickets/{tier_id}/checkout/pwyc",
@@ -227,12 +243,7 @@ class EventPublicTicketsController(EventPublicBaseController):
             payload.tickets, price_override=payload.price_per_ticket, billing_info=payload.billing_info
         )
 
-        if isinstance(result, str):
-            return schema.BatchCheckoutResponse(checkout_url=result, tickets=[])
-        return schema.BatchCheckoutResponse(
-            checkout_url=None,
-            tickets=[schema.UserTicketSchema.from_orm(t) for t in result],
-        )
+        return self._build_checkout_response(result)
 
     @route.post(
         "/{uuid:event_id}/tickets/vat-preview",
