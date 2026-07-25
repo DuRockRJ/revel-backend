@@ -39,6 +39,62 @@ def test_get_my_event_status_with_ticket(
     assert data["remaining_tickets"][0]["sold_out"] is False  # tier has unlimited inventory
 
 
+def test_get_my_event_status_with_pending_pix_ticket(
+    nonmember_client: Client, nonmember_user: RevelUser, public_event: Event
+) -> None:
+    """Test status re-generates the Pix payload/QR for a pending Pix ticket."""
+    public_event.organization.pix_key = "org@example.com"
+    public_event.organization.save()
+    tier = TicketTier.objects.create(
+        event=public_event, name="Pix Tier", payment_method=TicketTier.PaymentMethod.PIX, price="10.00"
+    )
+    ticket = Ticket.objects.create(
+        guest_name="Test Guest",
+        event=public_event,
+        user=nonmember_user,
+        tier=tier,
+        status=Ticket.TicketStatus.PENDING,
+        pix_reference="ABCD1234",
+    )
+    url = reverse("api:get_my_event_status", kwargs={"event_id": public_event.pk})
+    response = nonmember_client.get(url)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["tickets"]) == 1
+    result = data["tickets"][0]
+    assert result["id"] == str(ticket.id)
+    assert result["pix_payload"] is not None
+    assert "ABCD1234" in result["pix_payload"]
+    assert result["pix_qr_code_data_uri"].startswith("data:image/png;base64,")
+
+
+def test_get_my_event_status_active_pix_ticket_has_no_payload(
+    nonmember_client: Client, nonmember_user: RevelUser, public_event: Event
+) -> None:
+    """Test an already-confirmed Pix ticket no longer exposes a payload/QR."""
+    public_event.organization.pix_key = "org@example.com"
+    public_event.organization.save()
+    tier = TicketTier.objects.create(
+        event=public_event, name="Pix Tier", payment_method=TicketTier.PaymentMethod.PIX, price="10.00"
+    )
+    ticket = Ticket.objects.create(
+        guest_name="Test Guest",
+        event=public_event,
+        user=nonmember_user,
+        tier=tier,
+        status=Ticket.TicketStatus.ACTIVE,
+        pix_reference="ABCD1234",
+    )
+    url = reverse("api:get_my_event_status", kwargs={"event_id": public_event.pk})
+    response = nonmember_client.get(url)
+    assert response.status_code == 200
+    data = response.json()
+    result = data["tickets"][0]
+    assert result["id"] == str(ticket.id)
+    assert result["pix_payload"] is None
+    assert result["pix_qr_code_data_uri"] is None
+
+
 def test_get_my_event_status_with_rsvp(
     nonmember_client: Client, nonmember_user: RevelUser, rsvp_only_public_event: Event
 ) -> None:

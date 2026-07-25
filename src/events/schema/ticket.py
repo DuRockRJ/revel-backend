@@ -254,6 +254,10 @@ class UserTicketSchema(ModelSchema):
     discount_amount: Decimal | None = None
     pdf_url: str | None = None
     pkpass_url: str | None = None
+    pix_payload: str | None = Field(default=None, description="Pix BR Code payload, for pending Pix tickets.")
+    pix_qr_code_data_uri: str | None = Field(
+        default=None, description="Pix QR code as a data:image/png;base64 URI, for pending Pix tickets."
+    )
 
     class Meta:
         model = Ticket
@@ -275,6 +279,42 @@ class UserTicketSchema(ModelSchema):
         if hasattr(obj, "payment"):
             return obj.payment
         return None
+
+    @staticmethod
+    def _pix_fields(obj: Ticket) -> tuple[str, str] | tuple[None, None]:
+        """Regenerate the Pix payload/QR for a pending Pix ticket, so a buyer can re-view it.
+
+        The checkout response only returns these once; this recomputes them from the
+        ticket's stored ``pix_reference`` plus its tier/organization, matching the value
+        originally shown at checkout (same organization Pix key, txid, and amount).
+        """
+        if obj.tier.payment_method != TicketTier.PaymentMethod.PIX or obj.status != Ticket.TicketStatus.PENDING:
+            return None, None
+        from events.service.batch_ticket_service import build_pix_checkout_response_fields
+
+        tickets = list(Ticket.objects.filter(pix_reference=obj.pix_reference, tier__event_id=obj.tier.event_id))
+        return build_pix_checkout_response_fields(tickets)
+
+    @staticmethod
+    def resolve_pix_payload(obj: "Ticket | UserTicketSchema") -> str | None:
+        """Resolve the Pix payload for pending Pix tickets.
+
+        Ninja Extra revalidates this schema a second time when serializing a Union
+        response type (``EventUserStatusResponse | EventUserEligibility``), and on that
+        pass ``obj`` is the already-built ``UserTicketSchema`` instance rather than the
+        ORM ``Ticket`` (which lacks ``pix_reference``) — pass its already-resolved value
+        through unchanged instead of recomputing.
+        """
+        if isinstance(obj, Ticket):
+            return UserTicketSchema._pix_fields(obj)[0]
+        return obj.pix_payload
+
+    @staticmethod
+    def resolve_pix_qr_code_data_uri(obj: "Ticket | UserTicketSchema") -> str | None:
+        """Resolve the Pix QR code data URI for pending Pix tickets (see ``resolve_pix_payload``)."""
+        if isinstance(obj, Ticket):
+            return UserTicketSchema._pix_fields(obj)[1]
+        return obj.pix_qr_code_data_uri
 
     @staticmethod
     def resolve_pdf_url(obj: Ticket) -> str | None:
