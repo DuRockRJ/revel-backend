@@ -55,7 +55,7 @@ def test_update_response_uses_admin_detail_schema(
 
 
 def test_update_organization_pix_key(organization_owner_client: Client, organization: Organization) -> None:
-    """The Pix key is writable and echoed back via PUT."""
+    """The Pix key is writable and echoed back via PUT, and pix_configured reflects it."""
     url = reverse("api:edit_organization", kwargs={"slug": organization.slug})
     payload = {"visibility": "public", "pix_key": "org@example.com"}
 
@@ -63,8 +63,15 @@ def test_update_organization_pix_key(organization_owner_client: Client, organiza
 
     assert response.status_code == 200
     assert response.json()["pix_key"] == "org@example.com"
+    assert response.json()["pix_configured"] is True
     organization.refresh_from_db()
     assert organization.pix_key == "org@example.com"
+
+    # The admin GET endpoint (used by the event-creation flow) must reflect it too (#regression).
+    get_url = reverse("api:get_organization_admin", kwargs={"slug": organization.slug})
+    get_response = organization_owner_client.get(get_url)
+    assert get_response.status_code == 200
+    assert get_response.json()["pix_configured"] is True
 
 
 def test_upload_organization_logo_by_owner(

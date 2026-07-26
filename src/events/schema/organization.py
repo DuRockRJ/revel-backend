@@ -217,6 +217,12 @@ class OrganizationAdminDetailSchema(
     revenue_report_cadence: OrganizationModel.RevenueReportCadence
     # Pix payments
     pix_key: str
+    pix_configured: bool
+
+    @staticmethod
+    def resolve_pix_configured(obj: Organization) -> bool:
+        """Whether a Pix key is set, without exposing the key itself (mirrors is_stripe_connected)."""
+        return bool(obj.pix_key)
 
 
 class OrganizationPermissionsSchema(Schema):
